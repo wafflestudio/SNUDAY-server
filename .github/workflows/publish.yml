@@ -1,0 +1,26 @@
+name: middle actions
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+
+  pull_request:
+
+env:
+  IMAGE_NAME: middle
+
+jobs:
+  test:
+    runs-on: ubuntu:20.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: create dotenv
+      run: echo "${{ secrets.DOTENV }}" > ./.env
+
+    - name: docker build
+      run: docker-compose build
