@@ -3,7 +3,7 @@ name: middle actions
 on:
   push:
     branches:
-      - master
+      - main
     tags:
       - v*
 
