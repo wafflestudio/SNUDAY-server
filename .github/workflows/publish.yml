@@ -23,4 +23,4 @@ jobs:
       run: echo "${{ secrets.DOTENV }}" > ./.env
 
     - name: docker build
-      run: docker-compose build
+      run: docker-compose run middle python manage.py test --keepdb
