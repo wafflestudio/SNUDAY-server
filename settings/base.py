@@ -7,10 +7,7 @@ from pathlib import Path
 SECRET_KEY = os.environ.get("SECRET_KEY")
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-DEBUG = True
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -56,7 +53,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'HOST': os.environ.get('DB_HOST'),
         'PORT': 3306,
-        'NAME': os.environ.get('DB_NAME'), # database name
+        'NAME': os.environ.get('DB_NAME'),  # database name
         'USER': os.environ.get('DB_USERNAME'),
         'PASSWORD': os.environ.get('DB_PASSWORD'),
     }
