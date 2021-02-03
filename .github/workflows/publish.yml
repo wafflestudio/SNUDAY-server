@@ -66,3 +66,8 @@ jobs:
         python manage.py test
       env:
         DJANGO_SETTINGS_MODULE: settings.ci
+
+    - name: send slack noti
+      run: |
+        curl -X POST  --data-urlencode "payload={\"channel\": \"#team-스누데이\", \"text\": \"테스트 통과!\"}" ${{ secrets.WEBHOOK }}
+
