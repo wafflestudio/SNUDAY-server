@@ -16,11 +16,52 @@ jobs:
   test:
     runs-on: ubuntu-20.04
 
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: github-actions
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
-    - uses: actions/checkout@v2
+    - name: checkout code
+      uses: actions/checkout@v2
+
+    - name: cache dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: create dotenv
       run: echo "${{ secrets.DOTENV }}" > ./.env
 
-    - name: docker build
-      run: docker-compose run middle python manage.py test --keepdb
+    - name: setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8.5'
+
+    - name: check python version and pwd
+      run: |
+        python --version
+        ls
+
+    - name: install dependencies
+      run: pip install -r requirements.txt
+
+    - name: migrate and test
+      run: |
+        python manage.py migrate
+        python manage.py test
+      env:
+        DJANGO_SETTINGS_MODULE: settings.ci
