@@ -2,11 +2,11 @@ from .base import *
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "github-actions",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "mysql",
+        "USER": "mysql",
+        "PASSWORD": "password",
         "HOST": "localhost",
-        "PORT": "5432",
+        "PORT": "3306",
     },
 }
