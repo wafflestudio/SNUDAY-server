@@ -3,6 +3,7 @@ from django.test import TestCase
 from apps.core.utils import compose
 
 
+# test
 class UtilsTest(TestCase):
     def test_compose(self):
         def f(x):
