@@ -7,14 +7,12 @@ class UserCreateDeleteTest(TestCase):
         self.client = APIClient()
 
     def test_create_user(self):
-        create = self.client.post('/users/', {
+        create = self.client.post('/api/v1/users/', {
             "username": "snuday",
             "password": "password",
             "first_name": "Miseung",
             "last_name": "Kim",
             "email": "snuday@snu.ac.kr",
-            "faculty": "자유전공학부",
-            "major": "자유전공학부"
         }, format='json')
 
         self.assertEqual(create.status_code, 201)
