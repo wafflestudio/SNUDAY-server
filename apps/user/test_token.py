@@ -29,3 +29,19 @@ class TokenTest(TestCase):
 
         users_me = self.client.get('/api/v1/users/me/', HTTP_AUTHORIZATION=f"Bearer {access}")
         self.assertEqual(users_me.status_code, 200)
+
+    def test_fresh(self):
+        login = self.client.post('/api/v1/users/login/', {
+            'username': self.user.username,
+            'password': 'password'
+        }, format='json')
+
+        self.assertEqual(login.status_code, 200)
+
+        refresh_token = login.data['refresh']
+
+        refresh = self.client.post('/api/v1/users/refresh/', {
+            'refresh': refresh_token
+        }, format='json')
+
+        self.assertEqual(login.status_code, 200)
