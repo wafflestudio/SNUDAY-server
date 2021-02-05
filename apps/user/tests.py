@@ -50,7 +50,7 @@ class UserCreateDeleteTest(TestCase):
     def test_get_user_will_fail_without_login(self):
         get = self.client.get('/api/v1/users/me/')
 
-        self.assertEqual(get.status_code, 403)
+        self.assertEqual(get.status_code, 401)
 
     def test_get_user(self):
         self.client.force_authenticate(user=self.user)

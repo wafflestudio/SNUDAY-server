@@ -12,7 +12,7 @@ class UserViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
     serializer_class = UserSerializer
 
     def get_permissions(self):
-        if self.action in ('create', ):
+        if self.action in ('create', 'login', 'refresh'):
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
