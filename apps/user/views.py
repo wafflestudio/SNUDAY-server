@@ -18,13 +18,6 @@ class UserViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
-    # def create(self, request):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
-
     def retrieve(self, request, pk=None):
         user = request.user if pk == 'me' else self.get_object()
         return Response(self.get_serializer(user).data)
