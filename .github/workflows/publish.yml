@@ -1,9 +1,10 @@
 name: middle actions
 
 on:
+  push:
+    branches: [ master ]
   pull_request:
-  branches:
-      - main
+      branches: [ master ]
 
 env:
   IMAGE_NAME: middle
