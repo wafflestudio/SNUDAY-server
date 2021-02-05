@@ -1,13 +1,6 @@
 name: middle actions
 
-on:
-  push:
-    branches:
-      - *
-    tags:
-      - v*
-
-  pull_request:
+on: [push, pull_request]
 
 env:
   IMAGE_NAME: middle
