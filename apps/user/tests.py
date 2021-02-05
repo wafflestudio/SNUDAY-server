@@ -13,18 +13,39 @@ class UserCreateDeleteTest(TestCase):
             first_name='first',
             last_name='last'
         )
-        self.client = APIClient()
-
-    def test_create_user(self):
-        create = self.client.post('/api/v1/users/', {
+        self.data = {
             "username": "snuday",
             "password": "password",
             "first_name": "Miseung",
             "last_name": "Kim",
             "email": "snuday@snu.ac.kr",
-        }, format='json')
+        }
+        self.client = APIClient()
+
+    def test_create_user(self):
+        create = self.client.post('/api/v1/users/', self.data, format='json')
 
         self.assertEqual(create.status_code, 201)
+
+    def test_create_without_infos_will_fail(self):
+        keys = self.data.keys()
+        ds = [self.data.copy() for _ in range(len(keys))]
+
+        for k, d in zip(keys, ds):
+            del d[k]
+
+        for d in ds:
+            create = self.client.post('/api/v1/users/', d, format='json')
+
+            self.assertEqual(create.status_code, 400)
+
+    def test_create_with_malformed_data_will_fail(self):
+        data = self.data.copy()
+        data.update(email='실패!')
+
+        create = self.client.post('/api/v1/users/', data, format='json')
+
+        self.assertEqual(create.status_code, 400)
 
     def test_get_user_will_fail_without_login(self):
         get = self.client.get('/api/v1/users/me/')
