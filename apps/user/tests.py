@@ -37,3 +37,20 @@ class UserCreateDeleteTest(TestCase):
 
         self.assertEqual(get.status_code, 200)
 
+    def test_update_user(self):
+        self.client.force_authenticate(user=self.user)
+
+        username = 'apple'
+        email = 'samsung@snu.ac.kr'
+
+        update = self.client.put('/api/v1/users/me/', {
+            "username": username,
+            "email": email,
+        }, format='json')
+
+        self.assertEqual(update.status_code, 200)
+
+        user = User.objects.last()
+        self.assertEqual(user.username, username)
+        self.assertEqual(user.email, email)
+
