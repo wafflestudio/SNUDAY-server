@@ -16,6 +16,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'apps.user',
 ]
 
 MIDDLEWARE = [
@@ -29,6 +31,12 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'apps.urls'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 TEMPLATES = [
     {
@@ -85,3 +93,5 @@ USE_L10N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
+
+AUTH_USER_MODEL = 'user.User'
