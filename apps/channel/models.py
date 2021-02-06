@@ -11,7 +11,7 @@ def get_path(instance, filename):
     ext = filename.split('.')[-1]
     name = str(uuid4())
 
-    return f"{name}.{ext}"
+    return f"images/{name}.{ext}"
 
 
 class Image(models.Model):
