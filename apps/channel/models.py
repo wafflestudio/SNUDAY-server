@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.db import models
 from django.db.models import UniqueConstraint
 
@@ -5,12 +7,24 @@ from apps.core.models import TimeStampModel
 from apps.user.models import User
 
 
+def get_path(instance, filename):
+    ext = filename.split('.')[-1]
+    name = str(uuid4())
+
+    return f"{name}.{ext}"
+
+
+class Image(models.Model):
+    image = models.ImageField(upload_to=get_path)
+
+
 class Channel(TimeStampModel):
     name = models.CharField(max_length=100)
-    image = models.ImageField(upload_to='channel_images', null=True)
     description = models.TextField()
     is_private = models.BooleanField(default=False)
     is_official = models.BooleanField(default=False)
+
+    image = models.OneToOneField(Image, on_delete=models.SET_NULL, null=True)
 
     subscribers = models.ManyToManyField(
         User,
