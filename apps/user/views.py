@@ -1,15 +1,21 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status, mixins
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
+from apps.channel.serializers import ChannelSerializer
+from apps.core.mixins import SerializerChoiceMixin
 from apps.user.models import User
 from apps.user.serializers import UserSerializer
 
 
-class UserViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+class UserViewSet(SerializerChoiceMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_classes = {
+        'default': UserSerializer,
+        'channels': ChannelSerializer,
+    }
 
     def get_permissions(self):
         if self.action in ('create', 'login', 'refresh'):
