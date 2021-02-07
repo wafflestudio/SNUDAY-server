@@ -21,7 +21,9 @@ class Image(models.Model):
 class ChannelManager(models.Manager):
     def get_queryset(self):
         qs = super().get_queryset()
-        return qs.annotate(subscribers_count=Count(F('subscribers__id'), distinct=True))
+        return qs.annotate(
+            subscribers_count=Count(F('subscribers__id'), distinct=True),
+        )
 
 
 class Channel(TimeStampModel):
