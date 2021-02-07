@@ -101,6 +101,6 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.b)
 
         subscribe = self.client.post(f"/api/v1/channels/{self.channel.id}/subscribe/")
-        self.assertEqual(subscribe.status_code, 200)
+        self.assertEqual(subscribe.status_code, 204)
 
-        self.assertEqual(self.channel.subscribers_count, 1)
+        self.assertEqual(self.channel.subscribers.count(), 1)
