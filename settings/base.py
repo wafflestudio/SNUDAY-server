@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'apps.user',
     'apps.channel',
+    'apps.notice',
 ]
 
 MIDDLEWARE = [
