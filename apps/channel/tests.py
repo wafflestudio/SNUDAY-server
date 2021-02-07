@@ -23,5 +23,5 @@ class ChannelTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_create_channel(self):
-        create = self.client.post('/channels/', self.data, format='json')
+        create = self.client.post('/api/v1/channels/', self.data, format='json')
         self.assertEqual(create.status_code, 201)
