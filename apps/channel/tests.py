@@ -104,3 +104,26 @@ class ChannelPermissionTest(TestCase):
         self.assertEqual(subscribe.status_code, 204)
 
         self.assertEqual(self.channel.subscribers.count(), 1)
+
+    def test_subscribe_twice_will_fail(self):
+        self.client.force_authenticate(user=self.b)
+
+        self.client.post(f"/api/v1/channels/{self.channel.id}/subscribe/")
+        subscribe = self.client.post(f"/api/v1/channels/{self.channel.id}/subscribe/")
+
+        self.assertEqual(subscribe.status_code, 400)
+
+    def test_unsubscribe(self):
+        self.client.force_authenticate(user=self.b)
+        self.client.post(f"/api/v1/channels/{self.channel.id}/subscribe/")
+
+        subscribe = self.client.delete(f"/api/v1/channels/{self.channel.id}/subscribe/")
+
+        self.assertEqual(subscribe.status_code, 204)
+
+    def test_unsubscribe_without_subscribe_will_fail(self):
+        self.client.force_authenticate(user=self.b)
+
+        subscribe = self.client.delete(f"/api/v1/channels/{self.channel.id}/subscribe/")
+
+        self.assertEqual(subscribe.status_code, 400)
