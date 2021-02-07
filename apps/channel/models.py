@@ -23,7 +23,7 @@ class ChannelManager(models.Manager):
         qs = super().get_queryset()
         return qs.select_related('image').annotate(
             subscribers_count=Count(F('subscribers__id'), distinct=True),
-        )
+        ).prefetch_related('managers')
 
 
 class Channel(TimeStampModel):
