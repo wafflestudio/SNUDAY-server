@@ -16,3 +16,4 @@ class ChannelAdmin(admin.ModelAdmin):
 @admin.register(UserChannel)
 class UserChannelAdmin(admin.ModelAdmin):
     model = UserChannel
+    list_display = ('channel', 'user', )

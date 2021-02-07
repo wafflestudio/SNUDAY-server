@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from django.db import models
-from django.db.models import UniqueConstraint, Count, F
+from django.db.models import UniqueConstraint, Count, F, Prefetch, OuterRef, Subquery
 
 from apps.core.models import TimeStampModel
 from apps.user.models import User
@@ -21,7 +21,7 @@ class Image(models.Model):
 class ChannelManager(models.Manager):
     def get_queryset(self):
         qs = super().get_queryset()
-        return qs.annotate(
+        return qs.select_related('image').annotate(
             subscribers_count=Count(F('subscribers__id'), distinct=True),
         )
 
@@ -38,7 +38,16 @@ class Channel(TimeStampModel):
         User,
         through='UserChannel',
         through_fields=('channel', 'user'),
+        related_name='subscribing_channels',
         blank=True
+    )
+
+    managers = models.ManyToManyField(
+        User,
+        through='ManagerChannel',
+        through_fields=('channel', 'user'),
+        related_name='managing_channels',
+        blank=False,
     )
 
     objects = ChannelManager()
@@ -48,12 +57,23 @@ class UserChannel(models.Model):
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    is_manager = models.BooleanField(default=False)
-
     class Meta:
         constraints = [
             UniqueConstraint(
                 fields=('channel', 'user'),
                 name='subscribe_should_be_unique'
+            )
+        ]
+
+
+class ManagerChannel(models.Model):
+    channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=('channel', 'user'),
+                name='manager_relation_should_be_unique_together'
             )
         ]
