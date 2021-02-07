@@ -31,7 +31,7 @@ class ChannelSerializer(serializers.ModelSerializer):
     def validate(self, data):
         ids = data.pop('managers_id', [])
 
-        if not ids:
+        if not ids and not self.instance:
             raise serializers.ValidationError('매니저가 있어야 합니다.')
 
         data['managers'] = User.objects.filter(id__in=ids)
