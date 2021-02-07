@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 from django.db import models
-from django.db.models import UniqueConstraint
+from django.db.models import UniqueConstraint, Count, F
 
 from apps.core.models import TimeStampModel
 from apps.user.models import User
@@ -16,6 +16,12 @@ def get_path(instance, filename):
 
 class Image(models.Model):
     image = models.ImageField(upload_to=get_path)
+
+
+class ChannelManager(models.Manager):
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.annotate(subscribers_count=Count(F('subscribers__id'), distinct=True))
 
 
 class Channel(TimeStampModel):
@@ -33,6 +39,8 @@ class Channel(TimeStampModel):
         blank=True
     )
 
+    objects = ChannelManager()
+
 
 class UserChannel(models.Model):
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
@@ -47,4 +55,3 @@ class UserChannel(models.Model):
                 name='subscribe_should_be_unique'
             )
         ]
-
