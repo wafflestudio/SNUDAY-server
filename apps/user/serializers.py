@@ -26,3 +26,9 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('중복된 이메일입니다.')
 
         return value
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError('중복된 아이디입니다.')
+    
+        return value
