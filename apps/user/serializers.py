@@ -32,3 +32,6 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('중복된 아이디입니다.')
     
         return value
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
