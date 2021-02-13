@@ -19,7 +19,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channel = self.get_object()
 
         if channel.subscribers.filter(id=request.user.id).exists():
-            return Response("이미 구독 중입니다.", status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error" : "이미 구독 중입니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         channel.subscribers.add(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -29,7 +29,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channel = self.get_object()
 
         if not channel.subscribers.filter(id=request.user.id).exists():
-            return Response("구독 중이 아닙니다.", status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error" : "구독 중이 아닙니다."}, status=status.HTTP_400_BAD_REQUEST)
 
         channel.subscribers.remove(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)

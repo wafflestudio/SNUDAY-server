@@ -14,6 +14,7 @@ class ChannelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Channel
         fields = (
+            'id',
             'name',
             'description',
             'is_private',
