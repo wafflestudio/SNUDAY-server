@@ -15,21 +15,28 @@ class NoticeViewSet(viewsets.GenericViewSet):
     permission_classes = (IsOwnerOrReadOnly, )
 
 
-    def create(self, request, pk=None):
+    def create(self, request, pk):
         data = request.data.copy()
-        data['writer'] = request.user
-        data['channel'] = Channel.objects.filter(id=pk)
+        data['writer'] = request.user.id
+        data['channel'] = Channel.objects.filter(id=pk)[0].id
 
         serializer = NoticeSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-    def list(self, request, pk=None):
+    def list(self, request, pk):
         queryset = self.get_queryset()
-        
-        channel = Channel.objects.filter(id=pk)
-        data = queryset.select_related(channel=channel)
+        param = request.query_params
+
+        channel = Channel.objects.filter(id=pk)[0].id
+        data = queryset.select_related('channel')
+
+        if param.get('recent', '') == 'True':
+            if (data.count() > 10):
+                data = data[0:10]
+
         serializer = self.get_serializer(data, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+      

@@ -7,14 +7,14 @@ from apps.channel.serializers import ChannelSerializer
 
 
 class NoticeSerializer(serializers.ModelSerializer):
-    images = serializers.ImageField(required=False, many=True)
+    images = serializers.ImageField(required=False)
 
     class Meta:
         model = Notice
         fields = (
             'id',
             'title',
-            'content',
+            'contents',
             'channel',
             'writer',
             'created_at',
