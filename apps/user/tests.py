@@ -47,6 +47,13 @@ class UserCreateDeleteTest(TestCase):
 
         self.assertEqual(create.status_code, 400)
 
+    def test_create_with_dupliacted_username(self):
+        data = self.data.copy()
+        data.update(email='testuser')
+        create = self.client.post('/api/v1/users/', data, format='json')
+
+        self.assertEqual(create.status_code, 400)
+
     def test_create_with_malformed_data_will_fail(self):
         data = self.data.copy()
         data.update(email='실패!')
