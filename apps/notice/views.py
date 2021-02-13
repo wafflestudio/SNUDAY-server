@@ -14,6 +14,7 @@ class NoticeViewSet(viewsets.GenericViewSet):
     serializer_class = NoticeSerializer
     permission_classes = (IsOwnerOrReadOnly, )
 
+
     def create(self, request, pk=None):
         data = request.data.copy()
         data['writer'] = request.user
