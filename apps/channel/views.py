@@ -36,6 +36,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channel.subscribers.remove(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+@api_view(['GET'])
 def ChannelList(request):
     qs = request.user.subscribing_channels.all()
     data = ChannelSerializer(qs, many=True).data
