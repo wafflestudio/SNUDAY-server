@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.channel.models import Channel
+
 # TODO: S3 연결 후 이미지 처리하기
 from apps.user.models import User
 from apps.user.serializers import UserSerializer
@@ -8,32 +9,34 @@ from apps.user.serializers import UserSerializer
 
 class ChannelSerializer(serializers.ModelSerializer):
     subscribers_count = serializers.IntegerField(read_only=True)
-    managers_id = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+    managers_id = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True
+    )
     managers = serializers.SerializerMethodField()
 
     class Meta:
         model = Channel
         fields = (
-            'name',
-            'description',
-            'is_private',
-            'is_official',
-            'created_at',
-            'updated_at',
-            'subscribers_count',
-            'managers',
-            'managers_id',
+            "name",
+            "description",
+            "is_private",
+            "is_official",
+            "created_at",
+            "updated_at",
+            "subscribers_count",
+            "managers",
+            "managers_id",
         )
 
     def get_managers(self, channel):
         return UserSerializer(channel.managers, many=True, context=self.context).data
 
     def validate(self, data):
-        ids = data.pop('managers_id', [])
+        ids = data.pop("managers_id", [])
 
         if not ids and not self.instance:
-            raise serializers.ValidationError('매니저가 있어야 합니다.')
+            raise serializers.ValidationError("매니저가 있어야 합니다.")
 
-        data['managers'] = User.objects.filter(id__in=ids)
+        data["managers"] = User.objects.filter(id__in=ids)
 
         return data
