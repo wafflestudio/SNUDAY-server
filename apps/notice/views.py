@@ -92,7 +92,9 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
             return Response({"error": "Wrong Notice ID."}, status=status.HTTP_400_BAD_REQUEST)
 
         data = request.data.copy()
-
+        if data == {}:
+              return Response({"error": "The request is not complete."}, status=status.HTTP_400_BAD_REQUEST)
+              
         serializer = self.get_serializer(notice, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.check_object_permissions(self.request, notice)
