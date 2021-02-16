@@ -61,8 +61,6 @@ class ChannelSearchViewSet(viewsets.ModelViewSet):
                 elif search_type == 'description':
                     search_channel_list = channel_list.filter(Q(description__icontains = search_keyword))
                 return search_channel_list
-            else:
-                messages.error(self.request, '검색어는 두 글자 이상 입력해주세요.')
         return channel_list
 
     def get_context_data(self, **kwargs):
@@ -74,5 +72,14 @@ class ChannelSearchViewSet(viewsets.ModelViewSet):
     
     def list(self, request):
         qs = self.get_queryset()
+        result = qs.first()
+        param = request.query_params
+
+        if len(param['q']) < 2:
+            return Response({"error" : "검색어를 두 글자 이상 입력해주세요"}, status = status.HTTP_400_BAD_REQUEST)
+        
+        elif not result:
+            return Response({"error" : "검색 결과가 없습니다."}, status = status.HTTP_400_BAD_REQUEST)
+        
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
