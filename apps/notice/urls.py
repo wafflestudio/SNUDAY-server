@@ -1,16 +1,18 @@
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
-from .views import NoticeViewSet, NoticeIdViewSet
+from .views import NoticeIdViewSet
+from apps.channel.views import ChannelViewSet
+from rest_framework_nested import routers
+from apps.channel.urls import router
 
 app_name = 'notice'
 
-router = SimpleRouter()
-router.register('notices', NoticeViewSet, basename='notices')
 
-id_router = SimpleRouter()
-id_router.register('', NoticeIdViewSet, basename='notice')
+notices_router = routers.NestedSimpleRouter(router, r'channels', lookup='channel')
+notices_router.register(r'notices', NoticeIdViewSet, basename='channel-notices')
+
 
 urlpatterns = [
-    path('channels/<int:pk>/', include(router.urls)),
-    path('channels/<int:pk>/notices/<int:pk_2>/', include(id_router.urls)),
+    path('', include(router.urls), name='notice_list'),
+    path('', include(notices_router.urls), name='notice_detail'),
 ]

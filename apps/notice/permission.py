@@ -1,14 +1,10 @@
-from rest_framework.permissions import BasePermission
-
-class IsOwnerOrReadOnly(BasePermission):
-    message = '매니저 권한이 필요합니다.'
+from rest_framework import permissions
+from apps.channel.models import Channel
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated
     
     def has_object_permission(self, request, view, obj):
-        if request.user.is_authenticated:
-            if obj.managers.filter(id=request.user.id).exists():
-                return True
-            elif request.method in ('GET'):
-                return True
-            return False
-        else:
-            return False
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.channel.managers.filter(id=request.user.id).exists()
