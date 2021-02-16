@@ -5,11 +5,11 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 app_name = 'user'
 
-router = SimpleRouter()
-router.register('users', UserViewSet, basename='user')
+user_router = SimpleRouter()
+user_router.register('users', UserViewSet, basename='user')
 
 urlpatterns = [
     path('users/login/', TokenObtainPairView.as_view(), name='user-login'),
     path('users/refresh/', TokenRefreshView.as_view(), name='user-refresh'),
-    path('', include(router.urls)),
+    path('', include(user_router.urls)),
 ]

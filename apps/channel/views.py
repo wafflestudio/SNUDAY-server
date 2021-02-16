@@ -18,6 +18,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def subscribe(self, request, pk):
         channel = self.get_object()
 
+        if channel.is_private:
+            return Response("비공개 채널은 구독할 수 없습니다.", status=status.HTTP_403_FORBIDDEN)
+
         if channel.subscribers.filter(id=request.user.id).exists():
             return Response("이미 구독 중입니다.", status=status.HTTP_400_BAD_REQUEST)
 
