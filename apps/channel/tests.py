@@ -127,3 +127,67 @@ class ChannelPermissionTest(TestCase):
         subscribe = self.client.delete(f"/api/v1/channels/{self.channel.id}/subscribe/")
 
         self.assertEqual(subscribe.status_code, 400)
+
+
+class ChannelSearchTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='email@email.com',
+            password='password',
+            first_name='first',
+            last_name='last'
+        )
+
+        self.channel1 = Channel.objects.create(
+            name="wafflestudio",
+            description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+        )
+        self.channel1.managers.set([self.user])
+
+        self.channel2 = Channel.objects.create(
+            name="와플스튜디오 2021 Winter project",
+            description="와플스튜디오 겨울 프로젝트 진행을 위한 채널입니다."
+        )
+        self.channel2.managers.set([self.user])
+
+        self.channel3 = Channel.objects.create(
+            name="서울대학교 총학생회",
+            description="안녕하세요, 서울대학교 총학생회입니다."
+        )
+        self.channel3.managers.set([self.user])
+
+    def test_all_search(self):
+        type = 'all'
+        keyword = '와플'
+        all_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+
+        self.assertEqual(all_search.status_code, 200)
+
+    def test_description_search(self):
+        type = 'description'
+        keyword = '맛있는'
+        description_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+
+        self.assertEqual(description_search.status_code, 200)
+
+    def test_name_search(self):
+        type = 'name'
+        keyword = 'wafflestudio'
+        name_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+
+        self.assertEqual(name_search.status_code, 200)
+
+    def test_less_than_two_letters(self):
+        type = 'all'
+        keyword = '와'
+        less_than_two_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+
+        self.assertEqual(less_than_two_search.status_code, 400)
+
+    def test_less_than_two_letters_2(self):
+        type = 'all'
+        keyword = '검색되지않는단어'
+        not_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+
+        self.assertEqual(not_search.status_code, 400)
