@@ -65,9 +65,12 @@ jobs:
     - name: migrate and test
       run: |
         python manage.py migrate
-        python manage.py test
+        coverage run manage.py test
       env:
         DJANGO_SETTINGS_MODULE: settings.ci
+
+    - name: echo test coverage
+      run: coverage report
 
     - name: send slack noti
       run: |
