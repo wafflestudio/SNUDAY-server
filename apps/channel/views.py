@@ -10,11 +10,9 @@ from apps.channel.serializers import ChannelSerializer
 class ChannelViewSet(viewsets.ModelViewSet):
     queryset = Channel.objects.all()
     serializer_class = ChannelSerializer
-    permission_classes = [
-        ManagerCanModify
-    ]
+    permission_classes = [ManagerCanModify]
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def subscribe(self, request, pk):
         channel = self.get_object()
 
@@ -38,10 +36,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-
-
-
-@api_view(['GET'])
+@api_view(["GET"])
 def ChannelList(request):
     qs = request.user.subscribing_channels.all()
     data = ChannelSerializer(qs, many=True).data
