@@ -72,6 +72,10 @@ jobs:
     - name: echo test coverage
       run: coverage report
 
+    - uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
     - name: send slack noti
       run: |
         curl -X POST  --data-urlencode "payload={\"channel\": \"#team-스누데이\", \"text\": \"테스트 통과!\"}" ${{ secrets.WEBHOOK }}
