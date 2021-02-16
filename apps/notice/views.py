@@ -6,6 +6,7 @@ from apps.notice.models import Notice, NoticeImage
 from apps.channel.models import Channel
 from apps.notice.serializers import NoticeSerializer
 from apps.notice.permission import IsOwnerOrReadOnly
+from rest_framework.permissions import IsAuthenticated
 
 class NoticeIdViewSet(viewsets.GenericViewSet):
     queryset = Notice.objects.all()
@@ -94,7 +95,7 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         data = request.data.copy()
         if data == {}:
               return Response({"error": "The request is not complete."}, status=status.HTTP_400_BAD_REQUEST)
-              
+
         serializer = self.get_serializer(notice, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.check_object_permissions(self.request, notice)
@@ -118,3 +119,21 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         self.check_object_permissions(self.request, notice)
         notice.delete()
         return Response(status = status.HTTP_200_OK)
+
+class UserNoticeViewSet(viewsets.GenericViewSet):
+    queryset = Notice.objects.all()
+    serializer_class = NoticeSerializer
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def list(self, request, user_pk):
+        if user_pk != 'me':
+            return Response({"error": "Cannot read others\' notices"}, status=status.HTTP_403_FORBIDDEN)
+
+        channel_list = request.user.subscribing_channels.all().values_list('id', flat = True)
+
+        qs = Notice.objects.filter(channel__in = list(channel_list))
+        serializer = self.get_serializer(qs, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
