@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'apps.user',
     'apps.channel',
     'apps.notice',
+    'apps.event',
 ]
 
 MIDDLEWARE = [
