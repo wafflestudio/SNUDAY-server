@@ -26,8 +26,12 @@ class UserChannelAdmin(admin.ModelAdmin):
     model = UserChannel
     list_display = ('channel', 'user',)
 
-
+@admin.register(AwaiterChannel)
+class AwaiterChannelAdmin(admin.ModelAdmin):
+    model = AwaiterChannel
+    list_display = ('channel', 'user', )
+    
 @admin.register(ManagerChannel)
-class UserChannelAdmin(admin.ModelAdmin):
+class ManagerChannelAdmin(admin.ModelAdmin):
     model = ManagerChannel
     list_display = ('channel', 'user',)

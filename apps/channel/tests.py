@@ -54,32 +54,38 @@ class ChannelPermissionTest(TestCase):
             last_name='last'
         )
 
-        self.channel = Channel.objects.create(
+        self.public_channel = Channel.objects.create(
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
         )
-        self.channel.managers.set([self.user])
+        self.public_channel.managers.set([self.user])
 
+        self.private_channel = Channel.objects.create(
+            name="wafflestudio18-5",
+            description="와플스튜디오 18.5기 활동 채널입니다.",
+            is_private=True
+        )
+        self.private_channel.managers.set([self.user])
         self.client = APIClient()
 
     def test_delete_without_permission_will_fail(self):
         self.client.force_authenticate(user=self.b)
 
-        delete = self.client.delete(f'/api/v1/channels/{self.channel.id}/')
+        delete = self.client.delete(f'/api/v1/channels/{self.public_channel.id}/')
         self.assertEqual(delete.status_code, 403)
 
     def test_delete(self):
         self.client.force_authenticate(user=self.user)
 
-        delete = self.client.delete(f'/api/v1/channels/{self.channel.id}/')
+        delete = self.client.delete(f'/api/v1/channels/{self.public_channel.id}/')
         self.assertEqual(delete.status_code, 204)
 
-        self.assertEqual(Channel.objects.count(), 0)
+        self.assertEqual(Channel.objects.count(), 1)
 
     def test_update_without_permission_will_fail(self):
         self.client.force_authenticate(user=self.b)
 
-        update = self.client.patch(f'/api/v1/channels/{self.channel.id}/', {
+        update = self.client.patch(f'/api/v1/channels/{self.public_channel.id}/', {
             'description': '호야'
         }, format='json')
         self.assertEqual(update.status_code, 403)
@@ -89,44 +95,83 @@ class ChannelPermissionTest(TestCase):
 
         content = '내가 할 수 있는 건'
 
-        update = self.client.patch(f'/api/v1/channels/{self.channel.id}/', {
+        update = self.client.patch(f'/api/v1/channels/{self.public_channel.id}/', {
             'description': content
         }, format='json')
         self.assertEqual(update.status_code, 200)
 
-        channel = Channel.objects.last()
+        channel = Channel.objects.first()
         self.assertEqual(channel.description, content)
 
-    def test_subscribe(self):
+    def test_public_subscribe(self):
         self.client.force_authenticate(user=self.b)
 
-        subscribe = self.client.post(f"/api/v1/channels/{self.channel.id}/subscribe/")
+        subscribe = self.client.post(f"/api/v1/channels/{self.public_channel.id}/subscribe/")
         self.assertEqual(subscribe.status_code, 204)
 
-        self.assertEqual(self.channel.subscribers.count(), 1)
+        self.assertEqual(self.public_channel.subscribers.count(), 1)
 
-    def test_subscribe_twice_will_fail(self):
+    def test_public_subscribe_twice_will_fail(self):
         self.client.force_authenticate(user=self.b)
 
-        self.client.post(f"/api/v1/channels/{self.channel.id}/subscribe/")
-        subscribe = self.client.post(f"/api/v1/channels/{self.channel.id}/subscribe/")
+        self.client.post(f"/api/v1/channels/{self.public_channel.id}/subscribe/")
+        subscribe = self.client.post(f"/api/v1/channels/{self.public_channel.id}/subscribe/")
 
         self.assertEqual(subscribe.status_code, 400)
 
-    def test_unsubscribe(self):
+    def test_public_unsubscribe(self):
         self.client.force_authenticate(user=self.b)
-        self.client.post(f"/api/v1/channels/{self.channel.id}/subscribe/")
+        self.client.post(f"/api/v1/channels/{self.public_channel.id}/subscribe/")
 
-        subscribe = self.client.delete(f"/api/v1/channels/{self.channel.id}/subscribe/")
+        subscribe = self.client.delete(f"/api/v1/channels/{self.public_channel.id}/subscribe/")
 
         self.assertEqual(subscribe.status_code, 204)
 
-    def test_unsubscribe_without_subscribe_will_fail(self):
+    def test_public_unsubscribe_without_subscribe_will_fail(self):
         self.client.force_authenticate(user=self.b)
 
-        subscribe = self.client.delete(f"/api/v1/channels/{self.channel.id}/subscribe/")
+        subscribe = self.client.delete(f"/api/v1/channels/{self.public_channel.id}/subscribe/")
 
         self.assertEqual(subscribe.status_code, 400)
+    
+    def test_private_subscribe_and_unsubscribe(self):
+        self.client.force_authenticate(user=self.b)
+
+        subscribe = self.client.post(f"/api/v1/channels/{self.private_channel.id}/subscribe/")
+        self.assertEqual(subscribe.status_code, 204)
+        self.assertEqual(self.private_channel.awaiters.count(), 1)
+        self.assertEqual(self.private_channel.subscribers.count(), 0) # 자동 구독 / 자동 매니저 구현 후 수정
+
+        unsubscribe = self.client.delete(f"/api/v1/channels/{self.private_channel.id}/subscribe/")
+        self.assertEqual(subscribe.status_code, 204)
+        self.assertEqual(self.private_channel.awaiters.count(), 0)
+        self.assertEqual(self.private_channel.subscribers.count(), 0) # 자동 구독 / 자동 매니저 구현 후 수정
+
+    def test_private_subscribe_and_allow(self):
+        self.client.force_authenticate(user=self.b)
+
+        subscribe = self.client.post(f"/api/v1/channels/{self.private_channel.id}/subscribe/")
+        self.assertEqual(subscribe.status_code, 204)
+        self.assertEqual(self.private_channel.awaiters.count(), 1)
+
+        self.client.force_authenticate(user=self.user)
+        allow = self.client.post(f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/")
+        self.assertEqual(allow.status_code, 200)
+        self.assertEqual(self.private_channel.awaiters.count(), 0)
+        self.assertEqual(self.private_channel.subscribers.count(), 1) # 자동 구독 / 자동 매니저 구현 후 수정
+    
+    def test_private_subscribe_and_disallow(self):
+        self.client.force_authenticate(user=self.b)
+
+        subscribe = self.client.post(f"/api/v1/channels/{self.private_channel.id}/subscribe/")
+        self.assertEqual(subscribe.status_code, 204)
+        self.assertEqual(self.private_channel.awaiters.count(), 1)
+
+        self.client.force_authenticate(user=self.user)
+        allow = self.client.delete(f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/")
+        self.assertEqual(allow.status_code, 200)
+        self.assertEqual(self.private_channel.awaiters.count(), 0)
+        self.assertEqual(self.private_channel.subscribers.count(), 0) # 자동 구독 / 자동 매니저 구현 후 수정
 
 
 class ChannelSearchTest(TestCase):
