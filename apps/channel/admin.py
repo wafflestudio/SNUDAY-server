@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.channel.models import Image, Channel, UserChannel, ManagerChannel
+from apps.channel.models import Image, Channel, UserChannel, ManagerChannel, AwaiterChannel
 
 
 class ManagerInline(admin.TabularInline):
@@ -30,7 +30,7 @@ class UserChannelAdmin(admin.ModelAdmin):
 class AwaiterChannelAdmin(admin.ModelAdmin):
     model = AwaiterChannel
     list_display = ('channel', 'user', )
-    
+
 @admin.register(ManagerChannel)
 class ManagerChannelAdmin(admin.ModelAdmin):
     model = ManagerChannel
