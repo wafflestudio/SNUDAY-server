@@ -28,7 +28,7 @@ class ChannelTest(TestCase):
         create = self.client.post('/api/v1/channels/', self.data, format='json')
         self.assertEqual(create.status_code, 201)
 
-    def test_create_without_manager_will_suc(self):
+    def test_create_without_manager_will_success(self):
         data = self.data.copy()
         data.update(managers_id=[])
 
