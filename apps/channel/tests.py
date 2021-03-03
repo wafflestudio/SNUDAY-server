@@ -28,12 +28,12 @@ class ChannelTest(TestCase):
         create = self.client.post('/api/v1/channels/', self.data, format='json')
         self.assertEqual(create.status_code, 201)
 
-    def test_create_without_manager_will_fail(self):
+    def test_create_without_manager_will_suc(self):
         data = self.data.copy()
         data.update(managers_id=[])
 
         create = self.client.post('/api/v1/channels/', data, format='json')
-        self.assertEqual(create.status_code, 400)
+        self.assertEqual(create.status_code, 201)
 
 
 class ChannelPermissionTest(TestCase):
@@ -140,12 +140,12 @@ class ChannelPermissionTest(TestCase):
         subscribe = self.client.post(f"/api/v1/channels/{self.private_channel.id}/subscribe/")
         self.assertEqual(subscribe.status_code, 204)
         self.assertEqual(self.private_channel.awaiters.count(), 1)
-        self.assertEqual(self.private_channel.subscribers.count(), 0) # 자동 구독 / 자동 매니저 구현 후 수정
+        self.assertEqual(self.private_channel.subscribers.count(), 0)
 
         unsubscribe = self.client.delete(f"/api/v1/channels/{self.private_channel.id}/subscribe/")
         self.assertEqual(subscribe.status_code, 204)
         self.assertEqual(self.private_channel.awaiters.count(), 0)
-        self.assertEqual(self.private_channel.subscribers.count(), 0) # 자동 구독 / 자동 매니저 구현 후 수정
+        self.assertEqual(self.private_channel.subscribers.count(), 0)
 
     def test_private_subscribe_and_allow(self):
         self.client.force_authenticate(user=self.b)
@@ -158,7 +158,7 @@ class ChannelPermissionTest(TestCase):
         allow = self.client.post(f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/")
         self.assertEqual(allow.status_code, 200)
         self.assertEqual(self.private_channel.awaiters.count(), 0)
-        self.assertEqual(self.private_channel.subscribers.count(), 1) # 자동 구독 / 자동 매니저 구현 후 수정
+        self.assertEqual(self.private_channel.subscribers.count(), 1)
     
     def test_private_subscribe_and_disallow(self):
         self.client.force_authenticate(user=self.b)
@@ -171,7 +171,7 @@ class ChannelPermissionTest(TestCase):
         allow = self.client.delete(f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/")
         self.assertEqual(allow.status_code, 200)
         self.assertEqual(self.private_channel.awaiters.count(), 0)
-        self.assertEqual(self.private_channel.subscribers.count(), 0) # 자동 구독 / 자동 매니저 구현 후 수정
+        self.assertEqual(self.private_channel.subscribers.count(), 0)
 
 
 class ChannelSearchTest(TestCase):

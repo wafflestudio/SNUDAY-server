@@ -18,6 +18,43 @@ class ChannelViewSet(viewsets.ModelViewSet):
         ManagerCanModify
     ]
 
+    def create(self, request):
+        user = request.user
+        data = request.data.copy()
+
+        data['managers_id'].append(user.id)
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        channel = Channel.objects.get(id = serializer.data['id'])
+        for manager in data['managers_id']:
+            channel.subscribers.add(manager)
+            channel.managers.add(manager)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, pk=None):
+        channel = self.get_object()
+        data = request.data.copy()
+        
+        serializer = self.get_serializer(channel, data=data, partial=True)
+        validated_data = serializer.is_valid(raise_exception=True)
+        serializer.update(channel, serializer.validated_data)
+       
+        if 'managers_id' in data:
+            managers = list(channel.managers.all())
+            for manager in managers:
+                if not manager in data['managers_id']:
+                    channel.managers.remove(manager)
+            
+            for manager in data['managers_id']:
+                channel.subscribers.add(manager)
+                channel.managers.add(manager)
+        
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def subscribe(self, request, pk):
         channel = self.get_object()
