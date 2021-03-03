@@ -8,7 +8,7 @@ from apps.user.models import User
 
 
 def get_path(instance, filename):
-    ext = filename.split('.')[-1]
+    ext = filename.split(".")[-1]
     name = str(uuid4())
 
     return f"images/{name}.{ext}"
@@ -21,9 +21,13 @@ class Image(models.Model):
 class ChannelManager(models.Manager):
     def get_queryset(self):
         qs = super().get_queryset()
-        return qs.select_related('image').annotate(
-            subscribers_count=Count(F('subscribers__id'), distinct=True),
-        ).prefetch_related('managers')
+        return (
+            qs.select_related("image")
+            .annotate(
+                subscribers_count=Count(F("subscribers__id"), distinct=True),
+            )
+            .prefetch_related("managers")
+        )
 
 
 class Channel(TimeStampModel):
@@ -36,10 +40,10 @@ class Channel(TimeStampModel):
 
     subscribers = models.ManyToManyField(
         User,
-        through='UserChannel',
-        through_fields=('channel', 'user'),
-        related_name='subscribing_channels',
-        blank=True
+        through="UserChannel",
+        through_fields=("channel", "user"),
+        related_name="subscribing_channels",
+        blank=True,
     )
 
     awaiters = models.ManyToManyField(
@@ -52,9 +56,9 @@ class Channel(TimeStampModel):
 
     managers = models.ManyToManyField(
         User,
-        through='ManagerChannel',
-        through_fields=('channel', 'user'),
-        related_name='managing_channels',
+        through="ManagerChannel",
+        through_fields=("channel", "user"),
+        related_name="managing_channels",
         blank=False,
     )
 
@@ -68,8 +72,7 @@ class UserChannel(models.Model):
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=('channel', 'user'),
-                name='subscribe_should_be_unique'
+                fields=("channel", "user"), name="subscribe_should_be_unique"
             )
         ]
 
@@ -92,8 +95,8 @@ class ManagerChannel(models.Model):
     class Meta:
         constraints = [
             UniqueConstraint(
-                fields=('channel', 'user'),
-                name='manager_relation_should_be_unique_together'
+                fields=("channel", "user"),
+                name="manager_relation_should_be_unique_together",
             )
         ]
 

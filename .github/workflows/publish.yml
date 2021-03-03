@@ -59,14 +59,25 @@ jobs:
     - name: install dependencies
       run: pip install -r requirements.txt
 
+    - name: check python formatting
+      run: black --check .
+
     - name: migrate and test
       run: |
         python manage.py migrate
-        python manage.py test
+        coverage run manage.py test
       env:
         DJANGO_SETTINGS_MODULE: settings.ci
 
+    - name: echo test coverage
+      run: coverage report
+
+    - uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
     - name: send slack noti
+      if: github.ref == 'refs/heads/main'
       run: |
         curl -X POST  --data-urlencode "payload={\"channel\": \"#team-스누데이\", \"text\": \"테스트 통과!\"}" ${{ secrets.WEBHOOK }}
 

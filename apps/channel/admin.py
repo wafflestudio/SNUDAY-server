@@ -10,21 +10,22 @@ class ManagerInline(admin.TabularInline):
 
 @admin.register(Image)
 class ImageAdmin(admin.ModelAdmin):
-    fields = ('image',)
+    fields = ("image",)
 
 
 @admin.register(Channel)
 class ChannelAdmin(admin.ModelAdmin):
     model = Channel
-    inlines = [
-        ManagerInline
-    ]
+    inlines = [ManagerInline]
 
 
 @admin.register(UserChannel)
 class UserChannelAdmin(admin.ModelAdmin):
     model = UserChannel
-    list_display = ('channel', 'user',)
+    list_display = (
+        "channel",
+        "user",
+    )
 
 @admin.register(AwaiterChannel)
 class AwaiterChannelAdmin(admin.ModelAdmin):
@@ -34,4 +35,7 @@ class AwaiterChannelAdmin(admin.ModelAdmin):
 @admin.register(ManagerChannel)
 class ManagerChannelAdmin(admin.ModelAdmin):
     model = ManagerChannel
-    list_display = ('channel', 'user',)
+    list_display = (
+        "channel",
+        "user",
+    )
