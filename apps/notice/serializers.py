@@ -12,16 +12,12 @@ class NoticeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notice
         fields = (
-            'id',
-            'title',
-            'contents',
-            'channel',
-            'writer',
-            'created_at',
-            'updated_at',
-            'images',
+            "id",
+            "title",
+            "contents",
+            "channel",
+            "writer",
+            "created_at",
+            "updated_at",
+            "images",
         )
-
-
-
-    

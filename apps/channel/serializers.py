@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.channel.models import Channel
+
 # TODO: S3 연결 후 이미지 처리하기
 from apps.user.models import User
 from apps.user.serializers import UserSerializer
@@ -14,16 +15,16 @@ class ChannelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Channel
         fields = (
-            'id',
-            'name',
-            'description',
-            'is_private',
-            'is_official',
-            'created_at',
-            'updated_at',
-            'subscribers_count',
-            'managers',
-            'managers_id',
+            "id",
+            "name",
+            "description",
+            "is_private",
+            "is_official",
+            "created_at",
+            "updated_at",
+            "subscribers_count",
+            "managers",
+            "managers_id",
         )
 
     def get_managers(self, channel):
@@ -32,8 +33,10 @@ class ChannelSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if 'managers_id' in data:
             ids = data.pop('managers_id', [])
+      
             if not ids and not self.instance:
                 raise serializers.ValidationError('매니저가 있어야 합니다.')
+            
             data['managers'] = User.objects.filter(id__in=ids)
 
         return data

@@ -8,28 +8,32 @@ from apps.notice.serializers import NoticeSerializer
 from apps.notice.permission import IsOwnerOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 
+
 class NoticeIdViewSet(viewsets.GenericViewSet):
     queryset = Notice.objects.all()
     serializer_class = NoticeSerializer
-    permission_classes = [
-        IsOwnerOrReadOnly()
-    ]
+    permission_classes = [IsOwnerOrReadOnly()]
 
     def get_permissions(self):
         return self.permission_classes
 
     def create(self, request, channel_pk, pk=None):
         data = request.data.copy()
-        data['writer'] = request.user.id
+        data["writer"] = request.user.id
         channel = Channel.objects.filter(id=channel_pk).first()
 
         if channel == None:
-            return Response({"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        if not channel.managers.filter(id = request.user.id).exists():
-            return Response({"error": "Only managers can write a notice."}, status=status.HTTP_403_FORBIDDEN)
-        
-        data['channel'] = channel.id
+        if not channel.managers.filter(id=request.user.id).exists():
+            return Response(
+                {"error": "Only managers can write a notice."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        data["channel"] = channel.id
         serializer = NoticeSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -39,20 +43,24 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         queryset = self.get_queryset()
         param = request.query_params
 
-        channel = Channel.objects.filter(id = channel_pk).first()
+        channel = Channel.objects.filter(id=channel_pk).first()
 
         if channel == None:
-            return Response({"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        if channel.is_private and not (channel.managers.filter(id = request.user.id)):
-            return Response({"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN)
+        if channel.is_private and not (channel.managers.filter(id=request.user.id)):
+            return Response(
+                {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
+            )
 
-        data = queryset.filter(channel = channel_pk)
+        data = queryset.filter(channel=channel_pk)
         recent_notices = 10
 
-        if param.get('recent', '') == 'True':
-            if (data.count() > recent_notices):
-                data = data[0 : recent_notices]
+        if param.get("recent", "") == "True":
+            if data.count() > recent_notices:
+                data = data[0:recent_notices]
 
         serializer = self.get_serializer(data, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -60,19 +68,25 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
     def retrieve(self, request, channel_pk, pk):
         queryset = self.get_queryset()
 
-        channel = Channel.objects.filter(id = channel_pk).first()
+        channel = Channel.objects.filter(id=channel_pk).first()
 
         if channel == None:
-            return Response({"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        if channel.is_private and not (channel.managers.filter(id = request.user.id)):
-            return Response({"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN)
+        if channel.is_private and not (channel.managers.filter(id=request.user.id)):
+            return Response(
+                {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
+            )
 
-        data = queryset.filter(channel = channel_pk)
-        notice = data.filter(id = pk).first()
+        data = queryset.filter(channel=channel_pk)
+        notice = data.filter(id=pk).first()
 
         if notice == None:
-            return Response({"error": "Wrong Notice ID."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Notice ID."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         serializer = self.get_serializer(notice)
         self.check_object_permissions(self.request, notice)
@@ -84,56 +98,71 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         channel = Channel.objects.filter(id=channel_pk).first()
 
         if channel == None:
-            return Response({"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        data = queryset.filter(channel = channel_pk)
-        notice = data.filter(id = pk).first()
+        data = queryset.filter(channel=channel_pk)
+        notice = data.filter(id=pk).first()
 
         if notice == None:
-            return Response({"error": "Wrong Notice ID."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Notice ID."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         data = request.data.copy()
         if data == {}:
-              return Response({"error": "The request is not complete."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "The request is not complete."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         serializer = self.get_serializer(notice, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.check_object_permissions(self.request, notice)
         serializer.update(notice, serializer.validated_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     def destroy(self, request, channel_pk, pk):
         queryset = self.get_queryset()
 
         channel = Channel.objects.filter(id=channel_pk).first()
 
         if channel == None:
-            return Response({"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-        data = queryset.filter(channel = channel_pk)
-        notice = data.filter(id = pk).first()
+        data = queryset.filter(channel=channel_pk)
+        notice = data.filter(id=pk).first()
 
         if notice == None:
-            return Response({"error": "Wrong Notice ID."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Wrong Notice ID."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         self.check_object_permissions(self.request, notice)
         notice.delete()
-        return Response(status = status.HTTP_200_OK)
+        return Response(status=status.HTTP_200_OK)
+
 
 class UserNoticeViewSet(viewsets.GenericViewSet):
     queryset = Notice.objects.all()
     serializer_class = NoticeSerializer
-    permission_classes = [
-        IsAuthenticated
-    ]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request, user_pk):
-        if user_pk != 'me':
-            return Response({"error": "Cannot read others\' notices"}, status=status.HTTP_403_FORBIDDEN)
+        if user_pk != "me":
+            return Response(
+                {"error": "Cannot read others' notices"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
-        channel_list = request.user.subscribing_channels.all().values_list('id', flat = True)
+        channel_list = request.user.subscribing_channels.all().values_list(
+            "id", flat=True
+        )
 
-        qs = Notice.objects.filter(channel__in = list(channel_list))
+        qs = Notice.objects.filter(channel__in=list(channel_list))
         serializer = self.get_serializer(qs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
