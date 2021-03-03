@@ -6,7 +6,8 @@ from apps.channel.models import Channel
 
 
 class Event(TimeStampModel):
-    contents = models.CharField(max_length=100)
+    title = models.CharField(max_length=100)
+    memo = models.TextField(null=True)
     writer = models.ForeignKey(
         User,
         related_name="event_writer",

@@ -35,9 +35,9 @@ class EventViewSet(viewsets.GenericViewSet):
             )
 
         data["channel"] = channel.id
-        data["has_time"] = request.POST.get("has_time", False)
-        data["start_date"] = request.POST.get("start_date", None)
-        data["due_date"] = request.POST.get("due_date", None)
+        data["has_time"] = request.data.get("has_time", False)
+        data["start_date"] = request.data.get("start_date", None)
+        data["due_date"] = request.data.get("due_date", None)
 
         if data["has_time"] and ((not data["start_date"]) or (not data["due_date"])):
             return Response(
@@ -125,6 +125,10 @@ class EventViewSet(viewsets.GenericViewSet):
                 {"error": "The request is not complete."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        data["has_time"] = request.data.get("has_time", False)
+        data["start_date"] = request.data.get("start_date", event.start_date)
+        data["due_date"] = request.data.get("due_date", event.due_date)
 
         if data["has_time"] and ((not data["start_date"]) or (not data["due_date"])):
             return Response(

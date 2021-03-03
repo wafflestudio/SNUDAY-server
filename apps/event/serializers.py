@@ -10,7 +10,8 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = (
             "id",
-            "contents",
+            "title",
+            "memo",
             "channel",
             "writer",
             "created_at",
