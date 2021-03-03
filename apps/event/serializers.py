@@ -1,24 +1,24 @@
 from rest_framework import serializers
 
-from apps.notice.models import Notice, NoticeImage
+from apps.event.models import Event
 from apps.user.models import User
 from apps.channel.models import Channel
 
 
-class NoticeSerializer(serializers.ModelSerializer):
-    images = serializers.ImageField(required=False)
+class EventSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Notice
+        model = Event
         fields = (
             'id',
-            'title',
             'contents',
             'channel',
             'writer',
             'created_at',
             'updated_at',
-            'images',
+            'has_time',
+            'start_date',
+            'due_date',
         )
 
 
