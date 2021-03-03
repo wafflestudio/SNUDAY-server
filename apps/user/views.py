@@ -10,27 +10,31 @@ from apps.user.models import User
 from apps.user.serializers import UserSerializer
 
 
-class UserViewSet(SerializerChoiceMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
+class UserViewSet(
+    SerializerChoiceMixin, mixins.CreateModelMixin, viewsets.GenericViewSet
+):
     queryset = User.objects.all()
     serializer_classes = {
-        'default': UserSerializer,
-        'channels': ChannelSerializer,
+        "default": UserSerializer,
+        "channels": ChannelSerializer,
     }
 
     def get_permissions(self):
-        if self.action in ('create', 'login', 'refresh'):
+        if self.action in ("create", "login", "refresh"):
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
     def retrieve(self, request, pk=None):
-        user = request.user if pk == 'me' else self.get_object()
+        user = request.user if pk == "me" else self.get_object()
         return Response(self.get_serializer(user).data)
 
     def update(self, request, pk=None):
-        if pk != 'me':
-            return Response('다른 사람의 정보를 업데이트 할 수 없습니다.', status=status.HTTP_403_FORBIDDEN)
+        if pk != "me":
+            return Response(
+                "다른 사람의 정보를 업데이트 할 수 없습니다.", status=status.HTTP_403_FORBIDDEN
+            )
 
         user = request.user
         data = request.data.copy()

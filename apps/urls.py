@@ -10,4 +10,5 @@ urlpatterns = [
     path('api/v1/', include('apps.event.urls')),
 
     path('__debug__/', include(debug_toolbar.urls)),
+
 ]
