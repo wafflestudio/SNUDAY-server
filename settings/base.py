@@ -4,6 +4,7 @@ import re
 from datetime import timedelta, timezone
 from pathlib import Path
 
+
 SECRET_KEY = os.environ.get("SECRET_KEY")
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,6 +22,7 @@ INSTALLED_APPS = [
     "apps.user",
     "apps.channel",
     "apps.notice",
+    "apps.event",
 ]
 
 MIDDLEWARE = [

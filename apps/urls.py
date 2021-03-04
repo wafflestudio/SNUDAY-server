@@ -7,5 +7,6 @@ urlpatterns = [
     path("api/v1/", include("apps.user.urls")),
     path("api/v1/", include("apps.channel.urls")),
     path("api/v1/", include("apps.notice.urls")),
+    path("api/v1/", include("apps.event.urls")),
     path("__debug__/", include(debug_toolbar.urls)),
 ]
