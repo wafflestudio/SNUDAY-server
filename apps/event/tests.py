@@ -642,12 +642,6 @@ class PrivateChannelEventTest(TestCase):
         event_count = Event.objects.count()
         self.assertEqual(event_count, 1)
 
-    def test_subscriber_event(self):
-        self.client.force_authenticate(user=self.subscriber)
-        response = self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
-
-        self.assertEqual(response.status_code, 403)
-
     def test_watcher_event(self):
         self.client.force_authenticate(user=self.watcher)
 
