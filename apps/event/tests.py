@@ -181,6 +181,16 @@ class EventTest(TestCase):
 
         self.assertFalse(Event.objects.filter(id=event_id).first().has_time)
 
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(event_id)
+            ),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Event.objects.count(), 1)
+
     def test_no_event(self):
         event_count = Event.objects.count()
 
