@@ -54,6 +54,14 @@ class ChannelPermissionTest(TestCase):
             last_name="last",
         )
 
+        self.c = User.objects.create_user(
+            username="testuser3",
+            email="email3@email.com",
+            password="password",
+            first_name="first",
+            last_name="last",
+        )
+
         self.public_channel = Channel.objects.create(
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
@@ -96,16 +104,27 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         content = "내가 할 수 있는 건"
+        new_managers = [self.b.id]
 
         update = self.client.patch(
             f"/api/v1/channels/{self.public_channel.id}/",
-            {"description": content},
+            {"description": content, "managers_id": new_managers},
             format="json",
         )
         self.assertEqual(update.status_code, 200)
 
         channel = Channel.objects.first()
         self.assertEqual(channel.description, content)
+
+    def test_awaiters_list(self):
+        self.client.force_authenticate(user=self.user)
+        awaiters_list = self.client.get(
+            f"/api/v1/channels/{self.public_channel.id}/awaiters/"
+        )
+        self.client.force_authenticate(user=self.b)
+        self.assertEqual(awaiters_list.status_code, 200)
+        self.client.post(f"/api/v1/channels/{self.private_channel.id}/subscribe/")
+        self.assertEqual(self.private_channel.awaiters.count(), 1)
 
     def test_public_subscribe(self):
         self.client.force_authenticate(user=self.b)
@@ -124,7 +143,6 @@ class ChannelPermissionTest(TestCase):
         subscribe = self.client.post(
             f"/api/v1/channels/{self.public_channel.id}/subscribe/"
         )
-
         self.assertEqual(subscribe.status_code, 400)
 
     def test_public_unsubscribe(self):
@@ -180,6 +198,16 @@ class ChannelPermissionTest(TestCase):
         self.assertEqual(self.private_channel.awaiters.count(), 0)
         self.assertEqual(self.private_channel.subscribers.count(), 1)
 
+        reallow = self.client.post(
+            f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/"
+        )
+        self.assertEqual(reallow.status_code, 400)
+
+        not_subscribe = self.client.post(
+            f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.c.id}/"
+        )
+        self.assertEqual(reallow.status_code, 400)
+
     def test_private_subscribe_and_disallow(self):
         self.client.force_authenticate(user=self.b)
 
@@ -196,6 +224,45 @@ class ChannelPermissionTest(TestCase):
         self.assertEqual(allow.status_code, 200)
         self.assertEqual(self.private_channel.awaiters.count(), 0)
         self.assertEqual(self.private_channel.subscribers.count(), 0)
+
+        reallow = self.client.post(
+            f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/"
+        )
+        self.assertEqual(reallow.status_code, 400)
+
+        not_subscribe = self.client.post(
+            f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.c.id}/"
+        )
+        self.assertEqual(reallow.status_code, 400)
+
+    def test_delete_last_manager_fail(self):
+        self.client.force_authenticate(user=self.user)
+        update = self.client.patch(
+            f"/api/v1/channels/{self.public_channel.id}/",
+            {"managers_id": []},
+            format="json",
+        )
+        self.assertEqual(update.status_code, 400)
+
+    def test_manager_delete_success(self):
+        self.client.force_authenticate(user=self.user)
+        add_manager = self.client.patch(
+            f"/api/v1/channels/{self.public_channel.id}/",
+            {"managers_id": [self.user.id, self.b.id]},
+            format="json",
+        )
+        self.assertEqual(add_manager.status_code, 200)
+        self.assertEqual(self.public_channel.subscribers.count(), 2)
+        self.assertEqual(self.public_channel.managers.count(), 2)
+
+        delete_manager = self.client.patch(
+            f"/api/v1/channels/{self.public_channel.id}/",
+            {"managers_id": [self.user.id]},
+            format="json",
+        )
+        self.assertEqual(self.public_channel.subscribers.count(), 2)
+        self.assertEqual(self.public_channel.managers.count(), 1)
+        self.assertEqual(delete_manager.status_code, 200)
 
 
 class ChannelSearchTest(TestCase):
