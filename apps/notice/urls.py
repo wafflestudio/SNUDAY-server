@@ -1,11 +1,9 @@
 from django.urls import include, path
-from rest_framework.routers import SimpleRouter
-from .views import NoticeIdViewSet, UserNoticeViewSet
-from apps.channel.views import ChannelViewSet
 from rest_framework_nested import routers
+
 from apps.channel.urls import router
 from apps.user.urls import user_router
-
+from apps.notice.views import NoticeIdViewSet, UserNoticeViewSet
 
 app_name = "notice"
 

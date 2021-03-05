@@ -93,3 +93,9 @@ class UserCreateDeleteTest(TestCase):
         user = User.objects.last()
         self.assertEqual(user.username, username)
         self.assertEqual(user.email, email)
+
+    def test_get_users_channel(self):
+        self.client.force_authenticate(user=self.user)
+        get = self.client.get("/api/v1/users/me/channels/")
+
+        self.assertEqual(get.status_code, 200)

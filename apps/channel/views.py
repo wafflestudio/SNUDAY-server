@@ -1,6 +1,6 @@
 from django.db.models import Q
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, action
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from apps.channel.models import Channel
@@ -161,13 +161,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
         else:
             channel.awaiters.remove(user)
         return Response(status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-def ChannelList(request):
-    qs = request.user.subscribing_channels.all()
-    data = ChannelSerializer(qs, many=True).data
-    return Response(data)
 
 
 class ChannelSearchViewSet(viewsets.GenericViewSet):

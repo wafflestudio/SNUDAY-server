@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status, mixins
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
@@ -48,3 +49,13 @@ class UserViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+    @action(detail=True, methods=["GET"])
+    def channels(self, request, pk=None):
+        if pk != "me":
+            return Response(
+                "다른 이가 구독중인 채널을 볼 수 없습니다.", status=status.HTTP_403_FORBIDDEN
+            )
+        qs = request.user.subscribing_channels.all()
+        data = self.get_serializer(qs, many=True).data
+        return Response(data)
