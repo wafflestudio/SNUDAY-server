@@ -3,8 +3,11 @@ from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 
 from apps.channel.models import Channel
+from apps.user.models import User
 from apps.channel.permission import ManagerCanModify
 from apps.channel.serializers import ChannelSerializer
+from apps.user.serializers import UserSerializer
+from django.contrib import messages
 from django.db.models import Q
 
 
@@ -13,32 +16,129 @@ class ChannelViewSet(viewsets.ModelViewSet):
     serializer_class = ChannelSerializer
     permission_classes = [ManagerCanModify]
 
+    def create(self, request):
+        user = request.user
+        data = request.data.copy()
+
+        data["managers_id"].append(user.id)
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        channel = Channel.objects.get(id=serializer.data["id"])
+        for manager in data["managers_id"]:
+            channel.subscribers.add(manager)
+            channel.managers.add(manager)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def partial_update(self, request, pk=None):
+        channel = self.get_object()
+        data = request.data.copy()
+
+        serializer = self.get_serializer(channel, data=data, partial=True)
+        validated_data = serializer.is_valid(raise_exception=True)
+        serializer.update(channel, serializer.validated_data)
+
+        if "managers_id" in data:
+            managers = list(channel.managers.all())
+            for manager in managers:
+                if not manager in data["managers_id"]:
+                    channel.managers.remove(manager)
+
+            for manager in data["managers_id"]:
+                channel.subscribers.add(manager)
+                channel.managers.add(manager)
+
+        return Response(serializer.data)
+
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk):
         channel = self.get_object()
-
-        if channel.is_private:
-            return Response("비공개 채널은 구독할 수 없습니다.", status=status.HTTP_403_FORBIDDEN)
 
         if channel.subscribers.filter(id=request.user.id).exists():
             return Response(
                 {"error": "이미 구독 중입니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        channel.subscribers.add(request.user)
+        if channel.is_private:
+            channel.awaiters.add(request.user)
+
+        else:
+            channel.subscribers.add(request.user)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @subscribe.mapping.delete
     def unsubscribe(self, request, pk):
+        user = request.user
         channel = self.get_object()
 
-        if not channel.subscribers.filter(id=request.user.id).exists():
+        if (
+            not channel.subscribers.filter(id=user.id).exists()
+            and not channel.awaiters.filter(id=user.id).exists()
+        ):
             return Response(
                 {"error": "구독 중이 아닙니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        channel.subscribers.remove(request.user)
+        if channel.awaiters.filter(id=user.id).exists():
+            channel.awaiters.remove(request.user)
+
+        else:
+            channel.subscribers.remove(request.user)
+
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["get"])
+    def awaiters(self, request, pk):
+        channel = self.get_object()
+        awaiters = channel.awaiters
+        serializer = UserSerializer(awaiters, partial=True, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=True, methods=["post"], url_path="awaiters/allow/(?P<user_pk>[^/.]+)"
+    )
+    def allow(self, request, pk, user_pk):
+        user = User.objects.get(id=user_pk)
+        channel = self.get_object()
+
+        if channel.subscribers.filter(id=user.id).exists():
+            return Response(
+                {"error": "해당 유저는 이미 구독 중입니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        elif not channel.awaiters.filter(id=user.id).exists():
+            return Response(
+                {"error": "해당 유저는 구독 신청한 적이 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        else:
+            channel.subscribers.add(user)
+            channel.awaiters.remove(user)
+
+        return Response(status=status.HTTP_200_OK)
+
+    @allow.mapping.delete
+    def disallow(self, request, pk, user_pk):
+        channel = self.get_object()
+        user = User.objects.get(id=user_pk)
+
+        if channel.subscribers.filter(id=user.id).exists():
+            return Response(
+                {"error": "해당 유저는 이미 구독 중입니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        elif not channel.awaiters.filter(id=user.id).exists():
+            return Response(
+                {"error": "해당 유저는 구독 신청한 적이 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        else:
+            channel.awaiters.remove(user)
+        return Response(status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
