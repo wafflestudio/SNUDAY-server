@@ -1,17 +1,15 @@
-from django.shortcuts import render
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
+from rest_framework import viewsets, status, generics
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.event.models import Event
 from apps.channel.models import Channel
+from apps.core.utils import get_object_or_400
+from apps.event.models import Event
 from apps.event.serializers import EventSerializer
 from apps.notice.permission import IsOwnerOrReadOnly
-from rest_framework.permissions import IsAuthenticated
 
 
-class EventViewSet(viewsets.GenericViewSet):
+class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [IsOwnerOrReadOnly()]
@@ -53,9 +51,12 @@ class EventViewSet(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, channel_pk):
-        channel = get_object_or_404(Channel, id=channel_pk)
+        channel = get_object_or_400(Channel, id=channel_pk)
 
-        if channel.is_private and not (channel.managers.filter(id=request.user.id)):
+        if (
+            channel.is_private
+            and not channel.managers.filter(id=request.user.id).exists()
+        ):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
             )
@@ -72,32 +73,16 @@ class EventViewSet(viewsets.GenericViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, channel_pk, pk):
-        queryset = self.get_queryset()
+        channel = get_object_or_400(Channel, id=channel_pk)
 
-        channel = Channel.objects.filter(id=channel_pk).first()
-
-        if channel == None:
-            return Response(
-                {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if channel.is_private and not (channel.managers.filter(id=request.user.id)):
+        if channel.is_private and not (
+            channel.managers.filter(id=request.user.id).exists()
+        ):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        data = queryset.filter(channel=channel_pk)
-        event = data.filter(id=pk).first()
-
-        if event == None:
-            return Response(
-                {"error": "Wrong Event ID."}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        serializer = self.get_serializer(event)
-        self.check_object_permissions(self.request, event)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return super().retrieve(request, request, channel_pk, pk)
 
     def patch(self, request, channel_pk, pk):
         queryset = self.get_queryset()
