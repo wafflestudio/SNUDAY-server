@@ -1,6 +1,7 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from apps.channel.models import Channel, UserChannel
 from apps.user.models import User
 
 
@@ -96,6 +97,14 @@ class UserCreateDeleteTest(TestCase):
 
     def test_get_users_channel(self):
         self.client.force_authenticate(user=self.user)
+
+        channel = Channel.objects.create(
+            name="wafflestudio",
+            description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+        )
+        UserChannel.objects.create(user=self.user, channel=channel)
+
         get = self.client.get("/api/v1/users/me/channels/")
 
         self.assertEqual(get.status_code, 200)
+        self.assertEqual(len(get.data), 1)
