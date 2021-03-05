@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from apps.event.models import Event
@@ -52,25 +53,23 @@ class EventViewSet(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, channel_pk):
-        queryset = self.get_queryset()
-        param = request.query_params
-
-        channel = Channel.objects.filter(id=channel_pk).first()
-
-        if channel == None:
-            return Response(
-                {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
-            )
+        channel = get_object_or_404(Channel, id=channel_pk)
 
         if channel.is_private and not (channel.managers.filter(id=request.user.id)):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        data = queryset.filter(channel=channel_pk)
+        qs = self.get_queryset().filter(channel=channel)
 
-        serializer = self.get_serializer(data, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        page = self.paginate_queryset(qs)
+
+        if page is not None:
+            data = self.get_serializer(page, many=True).data
+            return self.get_paginated_response(data)
+
+        data = self.get_serializer(qs, many=True)
+        return Response(data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, channel_pk, pk):
         queryset = self.get_queryset()

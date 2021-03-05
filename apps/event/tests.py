@@ -38,7 +38,7 @@ class EventTest(TestCase):
 
     def test_create_event(self):
         response = self.client.post(
-            "/api/v1/channels/{}/events/".format(str(self.channel_id + 1)),
+            f"/api/v1/channels/{self.channel.id}/events/",
             self.data,
             format="json",
         )
