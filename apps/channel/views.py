@@ -1,14 +1,13 @@
+from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 
 from apps.channel.models import Channel
-from apps.user.models import User
 from apps.channel.permission import ManagerCanModify
 from apps.channel.serializers import ChannelSerializer
+from apps.user.models import User
 from apps.user.serializers import UserSerializer
-from django.contrib import messages
-from django.db.models import Q
 
 
 class ChannelViewSet(viewsets.ModelViewSet):
@@ -17,6 +16,12 @@ class ChannelViewSet(viewsets.ModelViewSet):
     permission_classes = [ManagerCanModify]
 
     def create(self, request):
+        """
+        # 채널을 만드는 API
+        * `managers_id`는 매니저의 `id`들을 넣어야 함
+        * image는 얻게 된 이미지의 url을 첨부할 것
+        * `is_private`은 비공개채널 여부에 대한 설정
+        """
         user = request.user
         data = request.data.copy()
 
@@ -34,6 +39,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def partial_update(self, request, pk=None):
+        """
+        # 채널을 수정 API
+        * 가급적 `PUT`보다 `PATCH`를 이용할 것
+        * 만드는 것과 거의 동일
+        """
         channel = self.get_object()
         data = request.data.copy()
 
@@ -55,6 +65,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk):
+        """
+        # 구독
+        * 이미 구독중이라면 에러
+        * 비공개 채널이라면 대기자 명단에 올라감
+        """
         channel = self.get_object()
 
         if channel.subscribers.filter(id=request.user.id).exists():
@@ -72,6 +87,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
     @subscribe.mapping.delete
     def unsubscribe(self, request, pk):
+        """
+        # 구독 취소
+        * 구독 중이지 않다면 에러
+        """
         user = request.user
         channel = self.get_object()
 
@@ -93,6 +112,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def awaiters(self, request, pk):
+        """
+        # 대기자 명단
+        """
         channel = self.get_object()
         awaiters = channel.awaiters
         serializer = UserSerializer(awaiters, partial=True, many=True)
