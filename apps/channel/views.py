@@ -140,6 +140,14 @@ class ChannelViewSet(viewsets.ModelViewSet):
             channel.awaiters.remove(user)
         return Response(status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["get"])
+    def recommend(self, request):
+        channels = Channel.objects.filter(is_private=False).order_by(
+            "-subscribers_count"
+        )[:5]
+        serializer = self.get_serializer(channels, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 @api_view(["GET"])
 def ChannelList(request):
