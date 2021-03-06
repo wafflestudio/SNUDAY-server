@@ -7,6 +7,7 @@ from apps.channel.models import Channel
 from apps.notice.serializers import NoticeSerializer
 from apps.notice.permission import IsOwnerOrReadOnly
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
 
 
 class NoticeIdViewSet(viewsets.GenericViewSet):
@@ -165,4 +166,54 @@ class UserNoticeViewSet(viewsets.GenericViewSet):
         qs = Notice.objects.filter(channel__in=list(channel_list))
         serializer = self.get_serializer(qs, many=True)
 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class NoticeSearchViewSet(viewsets.GenericViewSet):
+    serializer_class = NoticeSerializer
+
+    def get_queryset(self):
+        search_keyword = self.request.GET.get("q", "")
+        search_type = self.request.GET.get("type", "")
+        notice_list = Notice.objects.all()
+        return notice_list
+
+    def get_context_data(self, **kwargs):
+        search_keyword = self.request.GET.get("q", "")
+        search_type = self.request.GET.get("type", "")
+        context["q"] = search_keyword
+        context["type"] = search_type
+        return context
+
+    def list(self, request, channel_pk):
+        notice_list = self.get_queryset().filter(channel=channel_pk)
+        param = request.query_params
+        search_keyword = self.request.GET.get("q", "")
+        search_type = self.request.GET.get("type", "")
+
+        if len(param["q"]) < 2:
+            return Response(
+                {"error": "검색어를 두 글자 이상 입력해주세요"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if search_keyword:
+            if len(search_keyword) >= 2:
+                if search_type == "all":
+                    notice_list = notice_list.filter(
+                        Q(title__icontains=search_keyword)
+                        | Q(contents__icontains=search_keyword)
+                    )
+                elif search_type == "title":
+                    notice_list = notice_list.filter(Q(title__icontains=search_keyword))
+                elif search_type == "contents":
+                    notice_list = notice_list.filter(
+                        Q(contents__icontains=search_keyword)
+                    )
+
+        if not notice_list.first():
+            return Response(
+                {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(notice_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
