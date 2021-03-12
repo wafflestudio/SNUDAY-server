@@ -1,8 +1,6 @@
 from rest_framework import serializers
 
 from apps.event.models import Event
-from apps.user.models import User
-from apps.channel.models import Channel
 
 
 class EventSerializer(serializers.ModelSerializer):
