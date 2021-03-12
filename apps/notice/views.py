@@ -177,6 +177,11 @@ class NoticeSearchViewSet(viewsets.GenericViewSet):
         return notice_list
 
     def list(self, request, channel_pk):
+        """
+        # 채널 내 공지사항 검색 API
+        * params의 'type'으로 검색 타입 'all', 'title', 'contents'을 받음
+        * pararms의 'q'로 검색어를 받음
+        """
         notice_list = self.get_queryset().filter(channel_id=channel_pk)
         param = request.query_params
         search_keyword = self.request.GET.get("q", "")

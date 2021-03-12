@@ -124,6 +124,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
         detail=True, methods=["post"], url_path="awaiters/allow/(?P<user_pk>[^/.]+)"
     )
     def allow(self, request, pk, user_pk):
+        """
+        # 매니저가 대기자들의 구독을 수락하는 API
+        * 채널 매니저만 가능
+        """
         user = User.objects.get(id=user_pk)
         channel = self.get_object()
 
@@ -145,6 +149,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
     @allow.mapping.delete
     def disallow(self, request, pk, user_pk):
+        """
+        # 매니저가 대기자들의 구독을 거절하는 API
+        * 채널 매니저만 가능
+        """
         channel = self.get_object()
         user = User.objects.get(id=user_pk)
 
@@ -164,6 +172,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def recommend(self, request):
+        """
+        # 채널 추천 API
+        """
         channels = Channel.objects.filter(is_private=False).order_by(
             "-subscribers_count"
         )[:5]
@@ -198,6 +209,11 @@ class ChannelSearchViewSet(viewsets.GenericViewSet):
         return channel_list
 
     def list(self, request):
+        """
+        # 채널 검색 API
+        * params의 'type'으로 검색 타입 'all', 'name', 'description'을 받음
+        * pararms의 'q'로 검색어를 받음
+        """
         qs = self.get_queryset()
         param = request.query_params
         search_keyword = self.request.GET.get("q", "")
