@@ -38,14 +38,6 @@ class EventTest(TestCase):
 
     def test_create_event(self):
         response = self.client.post(
-            "/api/v1/channels/{}/events/".format(str(self.channel_id + 1)),
-            self.data,
-            format="json",
-        )
-
-        self.assertEqual(response.status_code, 400)
-
-        response = self.client.post(
             "/api/v1/channels/{}/events/".format(str(self.channel_id)),
             self.data,
             format="json",
@@ -79,11 +71,12 @@ class EventTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        data = response.json()
+        data = response.json()["results"]
 
         self.assertEqual(len(data), 2)
 
         for i in range(2):
+
             self.assertIn("id", data[i])
             self.assertEqual(data[i]["title"], "event title")
             self.assertEqual(data[i]["memo"], "event memo")
@@ -92,11 +85,11 @@ class EventTest(TestCase):
             self.assertIn("created_at", data[i])
             self.assertIn("updated_at", data[i])
 
-        self.assertEqual(data[0]["start_date"], "1998-12-11T00:00:00+09:00")
-        self.assertEqual(data[0]["due_date"], "2021-03-03T23:51:00+09:00")
+        self.assertEqual(data[1]["start_date"], "1998-12-11T00:00:00+09:00")
+        self.assertEqual(data[1]["due_date"], "2021-03-03T23:51:00+09:00")
 
-        self.assertIsNone(data[1]["start_date"])
-        self.assertIsNone(data[1]["due_date"])
+        self.assertIsNone(data[0]["start_date"])
+        self.assertIsNone(data[0]["due_date"])
 
         response = self.client.get(
             "/api/v1/channels/{}/events/".format(str(self.channel_id + 1)),
@@ -195,24 +188,24 @@ class EventTest(TestCase):
         event_count = Event.objects.count()
 
         # miss data
-        response = self.client.patch(
+        a = self.client.patch(
             "/api/v1/channels/{}/events/{}/".format(
                 str(self.channel_id), str(event_count)
             )
         )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(a.status_code, 400)
 
         # no channel id
-        response = self.client.get(
+        b = self.client.get(
             "/api/v1/channels/{}/events/{}/".format(
                 str(self.channel_id + 1), str(event_count)
             )
         )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(b.status_code, 400)
 
-        response = self.client.patch(
+        c = self.client.patch(
             "/api/v1/channels/{}/events/{}/".format(
                 str(self.channel_id + 1), str(event_count)
             ),
@@ -222,34 +215,34 @@ class EventTest(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(c.status_code, 400)
 
-        response = self.client.delete(
+        d = self.client.delete(
             "/api/v1/channels/{}/events/{}/".format(
                 str(self.channel_id + 1), str(event_count)
             )
         )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(d.status_code, 400)
 
         # no event id
-        response = self.client.get(
+        e = self.client.get(
             "/api/v1/channels/{}/events/{}/".format(
                 str(self.channel_id), str(event_count + 1)
             )
         )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(e.status_code, 404)
 
-        response = self.client.delete(
+        f = self.client.delete(
             "/api/v1/channels/{}/events/{}/".format(
                 str(self.channel_id), str(event_count + 1)
             )
         )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(f.status_code, 400)
 
-        response = self.client.patch(
+        g = self.client.patch(
             "/api/v1/channels/{}/events/{}/".format(
                 str(self.channel_id), str(event_count + 1)
             ),
@@ -259,7 +252,7 @@ class EventTest(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(g.status_code, 400)
 
 
 class PublicChannelEventTest(TestCase):
