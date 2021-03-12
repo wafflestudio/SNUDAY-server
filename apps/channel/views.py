@@ -182,24 +182,18 @@ class ChannelSearchViewSet(viewsets.GenericViewSet):
                 return search_channel_list
         return channel_list
 
-    def get_context_data(self, **kwargs):
-        search_keyword = self.request.GET.get("q", "")
-        search_type = self.request.GET.get("type", "")
-        context["q"] = search_keyword
-        context["type"] = search_type
-        return context
-
     def list(self, request):
         qs = self.get_queryset()
-        result = qs.first()
         param = request.query_params
+        search_keyword = self.request.GET.get("q", "")
+        search_type = self.request.GET.get("type", "")
 
         if len(param["q"]) < 2:
             return Response(
                 {"error": "검색어를 두 글자 이상 입력해주세요"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        elif not result:
+        elif not qs:
             return Response(
                 {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
             )

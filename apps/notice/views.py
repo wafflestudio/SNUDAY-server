@@ -173,20 +173,11 @@ class NoticeSearchViewSet(viewsets.GenericViewSet):
     serializer_class = NoticeSerializer
 
     def get_queryset(self):
-        search_keyword = self.request.GET.get("q", "")
-        search_type = self.request.GET.get("type", "")
         notice_list = Notice.objects.all()
         return notice_list
 
-    def get_context_data(self, **kwargs):
-        search_keyword = self.request.GET.get("q", "")
-        search_type = self.request.GET.get("type", "")
-        context["q"] = search_keyword
-        context["type"] = search_type
-        return context
-
     def list(self, request, channel_pk):
-        notice_list = self.get_queryset().filter(channel=channel_pk)
+        notice_list = self.get_queryset().filter(channel_id=channel_pk)
         param = request.query_params
         search_keyword = self.request.GET.get("q", "")
         search_type = self.request.GET.get("type", "")
@@ -210,7 +201,7 @@ class NoticeSearchViewSet(viewsets.GenericViewSet):
                         Q(contents__icontains=search_keyword)
                     )
 
-        if not notice_list.first():
+        if not notice_list:
             return Response(
                 {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
             )

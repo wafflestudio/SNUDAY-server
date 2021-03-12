@@ -609,7 +609,7 @@ class NoticeSearchTest(TestCase):
         type = "all"
         keyword = "와플"
         all_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
         )
 
         self.assertEqual(all_search.status_code, 200)
@@ -620,7 +620,7 @@ class NoticeSearchTest(TestCase):
         type = "title"
         keyword = "개강파티"
         title_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
         )
 
         self.assertEqual(title_search.status_code, 200)
@@ -631,7 +631,7 @@ class NoticeSearchTest(TestCase):
         type = "contents"
         keyword = "귀여운 "
         contents_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
         )
 
         self.assertEqual(contents_search.status_code, 200)
@@ -642,7 +642,7 @@ class NoticeSearchTest(TestCase):
         type = "all"
         keyword = "와"
         less_than_two_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
         )
 
         self.assertEqual(less_than_two_search.status_code, 400)
@@ -653,7 +653,7 @@ class NoticeSearchTest(TestCase):
         type = "all"
         keyword = "검색되지않는단어"
         not_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
         )
 
         self.assertEqual(not_search.status_code, 400)
