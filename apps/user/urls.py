@@ -1,6 +1,6 @@
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
-from .views import UserViewSet
+from apps.user.views import UserViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 app_name = "user"
