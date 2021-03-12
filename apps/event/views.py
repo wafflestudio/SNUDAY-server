@@ -12,7 +12,12 @@ from apps.notice.permission import IsOwnerOrReadOnly
 
 class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
     queryset = Event.objects.all()
-    serializer_class = EventSerializer
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return EventChannelNameSerializer
+        return EventSerializer
+
     permission_classes = [IsOwnerOrReadOnly()]
 
     def get_permissions(self):
@@ -82,7 +87,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
             )
-          
+
         return super().retrieve(request, request, channel_pk, pk)
 
     def patch(self, request, channel_pk, pk):
