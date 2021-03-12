@@ -12,7 +12,7 @@ app_name = "notice"
 notices_router = routers.NestedSimpleRouter(router, r"channels", lookup="channel")
 notices_router.register(r"notices", NoticeIdViewSet, basename="channel-notices")
 notices_router.register(
-    r"notice_search", NoticeSearchViewSet, basename="channel-notices-search"
+    r"notices_search", NoticeSearchViewSet, basename="channel-notices-search"
 )
 
 user_notice_router = routers.NestedSimpleRouter(user_router, r"users", lookup="user")

@@ -264,6 +264,10 @@ class ChannelPermissionTest(TestCase):
         self.assertEqual(self.public_channel.managers.count(), 1)
         self.assertEqual(delete_manager.status_code, 200)
 
+    def test_channel_recommend(self):
+        recommend = self.client.get(f"/api/v1/channels/recommend/")
+        self.assertEqual(recommend.status_code, 200)
+
 
 class ChannelSearchTest(TestCase):
     def setUp(self):

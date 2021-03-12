@@ -541,3 +541,119 @@ class PrivateChannelNoticeTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+
+class NoticeSearchTest(TestCase):
+    def setUp(self):
+        self.manager = User.objects.create_user(
+            username="manager",
+            email="manager@email.com",
+            password="password",
+            first_name="first",
+            last_name="last",
+        )
+
+        self.subscriber = User.objects.create_user(
+            username="subscriber",
+            email="subscriber@email.com",
+            password="password",
+            first_name="first",
+            last_name="last",
+        )
+
+        self.watcher = User.objects.create_user(
+            username="watcher",
+            email="watcher@email.com",
+            password="password",
+            first_name="first",
+            last_name="last",
+        )
+
+        self.channel = Channel.objects.create(
+            name="wafflestudio",
+            description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            is_private=True,
+        )
+        self.channel.managers.set([self.manager])
+
+        self.channel_id = self.channel.id
+
+        self.data = {"title": "notice title", "contents": "notice content"}
+
+        self.client = APIClient()
+
+        self.notice_1 = Notice.objects.create(
+            title="와플스튜디오 개강파티",
+            contents="3월 12일 저녁 7시",
+            channel=self.channel,
+            writer=self.manager,
+        )
+
+        self.notice_2 = Notice.objects.create(
+            title="와플스튜디오 신입 부원 모집",
+            contents="3월 13일까지 모집합니다.",
+            channel=self.channel,
+            writer=self.manager,
+        )
+
+        self.notice_3 = Notice.objects.create(
+            title="와플스튜디오 로고 캐릭터 선정",
+            contents="귀여운 캐릭터!",
+            channel=self.channel,
+            writer=self.manager,
+        )
+
+    def test_all_search(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "all"
+        keyword = "와플"
+        all_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+        )
+
+        self.assertEqual(all_search.status_code, 200)
+
+    def test_title_search(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "title"
+        keyword = "개강파티"
+        title_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+        )
+
+        self.assertEqual(title_search.status_code, 200)
+
+    def test_contents_search(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "contents"
+        keyword = "귀여운 "
+        contents_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+        )
+
+        self.assertEqual(contents_search.status_code, 200)
+
+    def test_less_than_two_letters(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "all"
+        keyword = "와"
+        less_than_two_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+        )
+
+        self.assertEqual(less_than_two_search.status_code, 400)
+
+    def test_less_than_two_letters_2(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "all"
+        keyword = "검색되지않는단어"
+        not_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices_search/?type={type}&q={keyword}"
+        )
+
+        self.assertEqual(not_search.status_code, 400)
