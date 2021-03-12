@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from apps.event.models import Event
 from apps.channel.models import Channel
-from apps.event.serializers import EventSerializer
+from apps.event.serializers import EventSerializer, EventChannelNameSerializer
 from apps.notice.permission import IsOwnerOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 
@@ -95,7 +95,7 @@ class EventViewSet(viewsets.GenericViewSet):
                 {"error": "Wrong Event ID."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        serializer = self.get_serializer(event)
+        serializer = EventChannelNameSerializer(event)
         self.check_object_permissions(self.request, event)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -169,7 +169,7 @@ class EventViewSet(viewsets.GenericViewSet):
 
 class UserEventViewSet(viewsets.GenericViewSet):
     queryset = Event.objects.all()
-    serializer_class = EventSerializer
+    serializer_class = EventChannelNameSerializer
     permission_classes = [IsAuthenticated]
 
     def list(self, request, user_pk):
