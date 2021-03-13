@@ -574,11 +574,16 @@ class NoticeSearchTest(TestCase):
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             is_private=True,
         )
+
+        self.channel_2 = Channel.objects.create(
+            name="서울대학교 총학생회",
+            description="총학 파이팅!",
+            is_private=False,
+        )
         self.channel.managers.set([self.manager])
 
         self.channel_id = self.channel.id
-
-        self.data = {"title": "notice title", "contents": "notice content"}
+        self.channel_2_id = self.channel_2.id
 
         self.client = APIClient()
 
@@ -603,57 +608,165 @@ class NoticeSearchTest(TestCase):
             writer=self.manager,
         )
 
-    def test_all_search(self):
-        self.client.force_authenticate(user=self.watcher)
+        self.notice_4 = Notice.objects.create(
+            title="맛있는 와플 가게",
+            contents="와플 초특가 할인",
+            channel=self.channel_2,
+            writer=self.manager,
+        )
+
+    def test_search_channel_notice_all(self):
+        self.client.force_authenticate(user=self.subscriber)
+        self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+        self.client.post(f"/api/v1/channels/{self.channel_2_id}/subscribe/")
 
         type = "all"
         keyword = "와플"
         all_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
+            f"/api/v1/users/me/notices/search/?type={type}&q={keyword}"
         )
+        data = all_search.json()["results"]
+        self.assertEqual(len(data), 4)
+
+        result_1 = data[1]
+        self.assertEqual(result_1["title"], "와플스튜디오 로고 캐릭터 선정")
+        self.assertEqual(result_1["contents"], "귀여운 캐릭터!")
+        self.assertEqual(result_1["channel"], self.channel_id)
+        self.assertEqual(result_1["writer"], self.manager.id)
 
         self.assertEqual(all_search.status_code, 200)
 
-    def test_title_search(self):
+    def test_search_channel_notice_title(self):
         self.client.force_authenticate(user=self.watcher)
 
         type = "title"
         keyword = "개강파티"
         title_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
         )
+        data = title_search.json()["results"]
+        self.assertEqual(len(data), 1)
+
+        result_1 = data[0]
+        self.assertEqual(result_1["title"], "와플스튜디오 개강파티")
+        self.assertEqual(result_1["contents"], "3월 12일 저녁 7시")
+        self.assertEqual(result_1["channel"], self.channel_id)
+        self.assertEqual(result_1["writer"], self.manager.id)
 
         self.assertEqual(title_search.status_code, 200)
 
-    def test_contents_search(self):
+    def test_search_channel_notice_contents(self):
         self.client.force_authenticate(user=self.watcher)
 
         type = "contents"
-        keyword = "귀여운 "
+        keyword = "귀여운"
         contents_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
         )
+        data = contents_search.json()["results"]
+        self.assertEqual(len(data), 1)
+
+        result_1 = data[0]
+        self.assertEqual(result_1["title"], "와플스튜디오 로고 캐릭터 선정")
+        self.assertEqual(result_1["contents"], "귀여운 캐릭터!")
+        self.assertEqual(result_1["channel"], self.channel_id)
+        self.assertEqual(result_1["writer"], self.manager.id)
 
         self.assertEqual(contents_search.status_code, 200)
 
-    def test_less_than_two_letters(self):
+    def test_search_channel_notice_less_than_two_letters(self):
         self.client.force_authenticate(user=self.watcher)
 
         type = "all"
         keyword = "와"
         less_than_two_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
         )
-
         self.assertEqual(less_than_two_search.status_code, 400)
 
-    def test_less_than_two_letters_2(self):
+    def test_search_channel_notice_invalid_keyword(self):
         self.client.force_authenticate(user=self.watcher)
 
         type = "all"
         keyword = "검색되지않는단어"
         not_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notice_search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
         )
+        self.assertEqual(not_search.status_code, 400)
 
+    def test_search_user_notice_all(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "all"
+        keyword = "와플"
+        all_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+        )
+        data = all_search.json()["results"]
+        self.assertEqual(len(data), 3)
+
+        result_1 = data[0]
+        self.assertEqual(result_1["title"], "와플스튜디오 로고 캐릭터 선정")
+        self.assertEqual(result_1["contents"], "귀여운 캐릭터!")
+        self.assertEqual(result_1["channel"], self.channel_id)
+        self.assertEqual(result_1["writer"], self.manager.id)
+
+        self.assertEqual(all_search.status_code, 200)
+
+    def test_search_user_notice_title(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "title"
+        keyword = "개강파티"
+        title_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+        )
+        data = title_search.json()["results"]
+        self.assertEqual(len(data), 1)
+
+        result_1 = data[0]
+        self.assertEqual(result_1["title"], "와플스튜디오 개강파티")
+        self.assertEqual(result_1["contents"], "3월 12일 저녁 7시")
+        self.assertEqual(result_1["channel"], self.channel_id)
+        self.assertEqual(result_1["writer"], self.manager.id)
+
+        self.assertEqual(title_search.status_code, 200)
+
+    def test_search_user_notice_contents(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "contents"
+        keyword = "귀여운"
+        contents_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+        )
+        data = contents_search.json()["results"]
+        self.assertEqual(len(data), 1)
+
+        result_1 = data[0]
+        self.assertEqual(result_1["title"], "와플스튜디오 로고 캐릭터 선정")
+        self.assertEqual(result_1["contents"], "귀여운 캐릭터!")
+        self.assertEqual(result_1["channel"], self.channel_id)
+        self.assertEqual(result_1["writer"], self.manager.id)
+
+        self.assertEqual(contents_search.status_code, 200)
+
+    def test_search_user_notice_less_than_two_letters(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "all"
+        keyword = "와"
+        less_than_two_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+        )
+        self.assertEqual(less_than_two_search.status_code, 400)
+
+    def test_search_user_notice_invalid_keyword(self):
+        self.client.force_authenticate(user=self.watcher)
+
+        type = "all"
+        keyword = "검색되지않는단어"
+        not_search = self.client.get(
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+        )
         self.assertEqual(not_search.status_code, 400)

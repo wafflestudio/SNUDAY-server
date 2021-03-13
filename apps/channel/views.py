@@ -218,16 +218,21 @@ class ChannelSearchViewSet(viewsets.GenericViewSet):
         param = request.query_params
         search_keyword = self.request.GET.get("q", "")
         search_type = self.request.GET.get("type", "")
+        page = self.paginate_queryset(qs)
 
         if len(param["q"]) < 2:
             return Response(
                 {"error": "검색어를 두 글자 이상 입력해주세요"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        elif not qs:
+        elif not qs.exists():
             return Response(
                 {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
             )
+
+        if page is not None:
+            data = self.get_serializer(page, many=True).data
+            return self.get_paginated_response(data)
 
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
