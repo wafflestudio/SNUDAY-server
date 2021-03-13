@@ -623,12 +623,12 @@ class NoticeSearchTest(TestCase):
         type = "all"
         keyword = "와플"
         all_search = self.client.get(
-            f"/api/v1/users/me/notices/search/?type={type}&q={keyword}"
+            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
         )
         data = all_search.json()["results"]
-        self.assertEqual(len(data), 4)
+        self.assertEqual(len(data), 3)
 
-        result_1 = data[1]
+        result_1 = data[0]
         self.assertEqual(result_1["title"], "와플스튜디오 로고 캐릭터 선정")
         self.assertEqual(result_1["contents"], "귀여운 캐릭터!")
         self.assertEqual(result_1["channel"], self.channel_id)
@@ -700,12 +700,12 @@ class NoticeSearchTest(TestCase):
         type = "all"
         keyword = "와플"
         all_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+            f"/api/v1/users/me/notices/search/?type={type}&q={keyword}"
         )
         data = all_search.json()["results"]
-        self.assertEqual(len(data), 3)
+        self.assertEqual(len(data), 4)
 
-        result_1 = data[0]
+        result_1 = data[1]
         self.assertEqual(result_1["title"], "와플스튜디오 로고 캐릭터 선정")
         self.assertEqual(result_1["contents"], "귀여운 캐릭터!")
         self.assertEqual(result_1["channel"], self.channel_id)
@@ -719,7 +719,7 @@ class NoticeSearchTest(TestCase):
         type = "title"
         keyword = "개강파티"
         title_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+            f"/api/v1/users/me/notices/search/?type={type}&q={keyword}"
         )
         data = title_search.json()["results"]
         self.assertEqual(len(data), 1)
@@ -738,7 +738,7 @@ class NoticeSearchTest(TestCase):
         type = "contents"
         keyword = "귀여운"
         contents_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+            f"/api/v1/users/me/notices/search/?type={type}&q={keyword}"
         )
         data = contents_search.json()["results"]
         self.assertEqual(len(data), 1)
@@ -757,7 +757,7 @@ class NoticeSearchTest(TestCase):
         type = "all"
         keyword = "와"
         less_than_two_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+            f"/api/v1/users/me/notices/search/?type={type}&q={keyword}"
         )
         self.assertEqual(less_than_two_search.status_code, 400)
 
@@ -767,6 +767,6 @@ class NoticeSearchTest(TestCase):
         type = "all"
         keyword = "검색되지않는단어"
         not_search = self.client.get(
-            f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
+            f"/api/v1/users/me/notices/search/?type={type}&q={keyword}"
         )
         self.assertEqual(not_search.status_code, 400)
