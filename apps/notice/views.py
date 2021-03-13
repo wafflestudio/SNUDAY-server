@@ -153,7 +153,7 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         * params의 'type'으로 검색 타입 'all', 'title', 'contents'을 받음
         * pararms의 'q'로 검색어를 받음
         """
-        notice_list = self.get_queryset().filter(channel_id=channel_pk)
+        qs = self.get_queryset().filter(channel_id=channel_pk)
         param = request.query_params
         search_keyword = self.request.GET.get("q", "")
         search_type = self.request.GET.get("type", "")
@@ -166,30 +166,24 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         if search_keyword:
             if len(search_keyword) >= 2:
                 if search_type == "all":
-                    notice_list = notice_list.filter(
+                    qs = qs.filter(
                         Q(title__icontains=search_keyword)
                         | Q(contents__icontains=search_keyword)
                     )
                 elif search_type == "title":
-                    notice_list = notice_list.filter(Q(title__icontains=search_keyword))
+                    qs = qs.filter(Q(title__icontains=search_keyword))
                 elif search_type == "contents":
-                    notice_list = notice_list.filter(
-                        Q(contents__icontains=search_keyword)
-                    )
+                    qs = qs.filter(Q(contents__icontains=search_keyword))
 
-        if not notice_list.exists():
+        if not qs.exists():
             return Response(
                 {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        page = self.paginate_queryset(notice_list)
+        page = self.paginate_queryset(qs)
 
-        if page is not None:
-            data = self.get_serializer(page, many=True).data
-            return self.get_paginated_response(data)
-
-        serializer = self.get_serializer(notice_list, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
 
 
 class UserNoticeViewSet(viewsets.GenericViewSet):
@@ -220,7 +214,17 @@ class UserNoticeViewSet(viewsets.GenericViewSet):
         * params의 'type'으로 검색 타입 'all', 'title', 'contents'을 받음
         * pararms의 'q'로 검색어를 받음
         """
-        notice_list = self.get_queryset()
+        if user_pk != "me":
+            return Response(
+                {"error": "Cannot read others' notices"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        channel_list = request.user.subscribing_channels.all().values_list(
+            "id", flat=True
+        )
+
+        qs = Notice.objects.filter(channel__in=list(channel_list))
         param = request.query_params
         search_keyword = self.request.GET.get("q", "")
         search_type = self.request.GET.get("type", "")
@@ -233,27 +237,21 @@ class UserNoticeViewSet(viewsets.GenericViewSet):
         if search_keyword:
             if len(search_keyword) >= 2:
                 if search_type == "all":
-                    notice_list = notice_list.filter(
+                    qs = qs.filter(
                         Q(title__icontains=search_keyword)
                         | Q(contents__icontains=search_keyword)
                     )
                 elif search_type == "title":
-                    notice_list = notice_list.filter(Q(title__icontains=search_keyword))
+                    qs = qs.filter(Q(title__icontains=search_keyword))
                 elif search_type == "contents":
-                    notice_list = notice_list.filter(
-                        Q(contents__icontains=search_keyword)
-                    )
+                    qs = qs.filter(Q(contents__icontains=search_keyword))
 
-        page = self.paginate_queryset(notice_list)
-
-        if not notice_list.exists():
+        if not qs.exists():
             return Response(
                 {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if page is not None:
-            data = self.get_serializer(page, many=True).data
-            return self.get_paginated_response(data)
+        page = self.paginate_queryset(qs)
 
-        serializer = self.get_serializer(notice_list, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)

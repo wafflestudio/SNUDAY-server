@@ -572,7 +572,7 @@ class NoticeSearchTest(TestCase):
         self.channel = Channel.objects.create(
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
-            is_private=True,
+            is_private=False,
         )
 
         self.channel_2 = Channel.objects.create(
@@ -617,8 +617,6 @@ class NoticeSearchTest(TestCase):
 
     def test_search_channel_notice_all(self):
         self.client.force_authenticate(user=self.subscriber)
-        self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
-        self.client.post(f"/api/v1/channels/{self.channel_2_id}/subscribe/")
 
         type = "all"
         keyword = "와플"
@@ -696,6 +694,8 @@ class NoticeSearchTest(TestCase):
 
     def test_search_user_notice_all(self):
         self.client.force_authenticate(user=self.watcher)
+        self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+        self.client.post(f"/api/v1/channels/{self.channel_2_id}/subscribe/")
 
         type = "all"
         keyword = "와플"
@@ -715,6 +715,8 @@ class NoticeSearchTest(TestCase):
 
     def test_search_user_notice_title(self):
         self.client.force_authenticate(user=self.watcher)
+        self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+        self.client.delete(f"/api/v1/channels/{self.channel_2_id}/unsubscribe/")
 
         type = "title"
         keyword = "개강파티"
@@ -732,8 +734,16 @@ class NoticeSearchTest(TestCase):
 
         self.assertEqual(title_search.status_code, 200)
 
+        keyword_2 = "가게"
+        title_search_2 = self.client.get(
+            f"/api/v1/users/me/notices/search/?type={type}&q={keyword_2}"
+        )
+        self.assertEqual(title_search_2.status_code, 400)
+
     def test_search_user_notice_contents(self):
         self.client.force_authenticate(user=self.watcher)
+        self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+        self.client.post(f"/api/v1/channels/{self.channel_2_id}/subscribe/")
 
         type = "contents"
         keyword = "귀여운"
@@ -753,6 +763,8 @@ class NoticeSearchTest(TestCase):
 
     def test_search_user_notice_less_than_two_letters(self):
         self.client.force_authenticate(user=self.watcher)
+        self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+        self.client.post(f"/api/v1/channels/{self.channel_2_id}/subscribe/")
 
         type = "all"
         keyword = "와"
@@ -763,6 +775,8 @@ class NoticeSearchTest(TestCase):
 
     def test_search_user_notice_invalid_keyword(self):
         self.client.force_authenticate(user=self.watcher)
+        self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+        self.client.post(f"/api/v1/channels/{self.channel_2_id}/subscribe/")
 
         type = "all"
         keyword = "검색되지않는단어"
@@ -770,3 +784,15 @@ class NoticeSearchTest(TestCase):
             f"/api/v1/users/me/notices/search/?type={type}&q={keyword}"
         )
         self.assertEqual(not_search.status_code, 400)
+
+    def test_search_user_others_fail(self):
+        self.client.force_authenticate(user=self.watcher)
+        self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+        self.client.post(f"/api/v1/channels/{self.channel_2_id}/subscribe/")
+
+        type = "all"
+        keyword = "실패"
+        not_search = self.client.get(
+            f"/api/v1/users/{self.subscriber}/notices/search/?type={type}&q={keyword}"
+        )
+        self.assertEqual(not_search.status_code, 403)

@@ -230,9 +230,5 @@ class ChannelSearchViewSet(viewsets.GenericViewSet):
                 {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if page is not None:
-            data = self.get_serializer(page, many=True).data
-            return self.get_paginated_response(data)
-
-        serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
