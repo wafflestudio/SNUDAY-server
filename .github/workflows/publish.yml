@@ -94,7 +94,7 @@ jobs:
         run: echo "${{ secrets.DOTENV }}" > .env
 
       - name: Log into GitHub Container Registry
-        run: echo "${{ secrets.TOKEN }}" | docker login https://docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.TOKEN }}" | docker login https://docker.pkg.github.com -u ${{ secrets.USER }} --password-stdin
 
       - name: Build image
         run: docker-compose build middle
