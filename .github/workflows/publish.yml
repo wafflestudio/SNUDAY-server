@@ -106,9 +106,16 @@ jobs:
           password: ${{ secrets.TOKEN }}
           registry: docker.pkg.github.com
           repository: wafflestudio/snuday-server/snuday-server-image
-          tag_with_ref: true
+
+      - name: executing remote ssh commands using password
+          uses: appleboy/ssh-action@master
+          with:
+            host: ${{ secrets.HOST }}
+            username: ubuntu
+            script: |
+              pwd
 
       - name: send slack noti
         run: |
-          curl -X POST  --data-urlencode "payload={\"channel\": \"#team-스누데이\", \"text\": \"이미지를 구웠다!\"}" ${{ secrets.WEBHOOK }}
+          curl -X POST  --data-urlencode "payload={\"channel\": \"#team-스누데이\", \"text\": \"서버에 배포했다!!\"}" ${{ secrets.WEBHOOK }}
 
