@@ -81,3 +81,34 @@ jobs:
       run: |
         curl -X POST  --data-urlencode "payload={\"channel\": \"#team-스누데이\", \"text\": \"테스트 통과!\"}" ${{ secrets.WEBHOOK }}
 
+  push:
+    needs: test
+
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: create dotenv
+        run: echo "${{ secrets.DOTENV }}" > .env
+
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.TOKEN }}" | docker login https://docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+
+      - name: Build image
+        run: docker-compose build middle
+
+      - name: Push to GitHub Packages
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.TOKEN }}
+          registry: docker.pkg.github.com
+          repository: wafflestudio/snuday-server/snuday-server-image
+          tag_with_ref: true
+
+      - name: send slack noti
+        run: |
+          curl -X POST  --data-urlencode "payload={\"channel\": \"#team-스누데이\", \"text\": \"이미지를 구웠다!\"}" ${{ secrets.WEBHOOK }}
+
