@@ -7,6 +7,7 @@ from apps.channel.models import Channel
 from apps.notice.serializers import NoticeSerializer
 from apps.notice.permission import IsOwnerOrReadOnly
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
 
 
 class NoticeIdViewSet(viewsets.GenericViewSet):
@@ -145,6 +146,45 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         notice.delete()
         return Response(status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["get"])
+    def search(self, request, channel_pk):
+        """
+        # 채널 내 공지사항 검색 API
+        * params의 'type'으로 검색 타입 'all', 'title', 'contents'을 받음
+        * pararms의 'q'로 검색어를 받음
+        """
+        qs = self.get_queryset().filter(channel_id=channel_pk)
+        param = request.query_params
+        search_keyword = self.request.GET.get("q", "")
+        search_type = self.request.GET.get("type", "")
+
+        if len(param["q"]) < 2:
+            return Response(
+                {"error": "검색어를 두 글자 이상 입력해주세요"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if search_keyword:
+            if len(search_keyword) >= 2:
+                if search_type == "all":
+                    qs = qs.filter(
+                        Q(title__icontains=search_keyword)
+                        | Q(contents__icontains=search_keyword)
+                    )
+                elif search_type == "title":
+                    qs = qs.filter(Q(title__icontains=search_keyword))
+                elif search_type == "contents":
+                    qs = qs.filter(Q(contents__icontains=search_keyword))
+
+        if not qs.exists():
+            return Response(
+                {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        page = self.paginate_queryset(qs)
+
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
+
 
 class UserNoticeViewSet(viewsets.GenericViewSet):
     queryset = Notice.objects.all()
@@ -166,3 +206,52 @@ class UserNoticeViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(qs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"])
+    def search(self, request, user_pk):
+        """
+        # 유저가 구독하고 있는 채널들의 공지사항 검색 API
+        * params의 'type'으로 검색 타입 'all', 'title', 'contents'을 받음
+        * pararms의 'q'로 검색어를 받음
+        """
+        if user_pk != "me":
+            return Response(
+                {"error": "Cannot read others' notices"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        channel_list = request.user.subscribing_channels.all().values_list(
+            "id", flat=True
+        )
+
+        qs = Notice.objects.filter(channel__in=list(channel_list))
+        param = request.query_params
+        search_keyword = self.request.GET.get("q", "")
+        search_type = self.request.GET.get("type", "")
+
+        if len(param["q"]) < 2:
+            return Response(
+                {"error": "검색어를 두 글자 이상 입력해주세요"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if search_keyword:
+            if len(search_keyword) >= 2:
+                if search_type == "all":
+                    qs = qs.filter(
+                        Q(title__icontains=search_keyword)
+                        | Q(contents__icontains=search_keyword)
+                    )
+                elif search_type == "title":
+                    qs = qs.filter(Q(title__icontains=search_keyword))
+                elif search_type == "contents":
+                    qs = qs.filter(Q(contents__icontains=search_keyword))
+
+        if not qs.exists():
+            return Response(
+                {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        page = self.paginate_queryset(qs)
+
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)

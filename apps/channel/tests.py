@@ -26,6 +26,9 @@ class ChannelTest(TestCase):
 
     def test_create_channel(self):
         create = self.client.post("/api/v1/channels/", self.data, format="json")
+        data = create.json()
+        channel = Channel.objects.get(id=data["id"])
+        self.assertEqual(channel.managers.count(), 1)
         self.assertEqual(create.status_code, 201)
 
     def test_create_without_manager_will_success(self):
@@ -264,6 +267,10 @@ class ChannelPermissionTest(TestCase):
         self.assertEqual(self.public_channel.managers.count(), 1)
         self.assertEqual(delete_manager.status_code, 200)
 
+    def test_channel_recommend(self):
+        recommend = self.client.get(f"/api/v1/channels/recommend/")
+        self.assertEqual(recommend.status_code, 200)
+
 
 class ChannelSearchTest(TestCase):
     def setUp(self):
@@ -279,13 +286,11 @@ class ChannelSearchTest(TestCase):
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
         )
-        self.channel1.managers.set([self.user])
 
         self.channel2 = Channel.objects.create(
             name="와플스튜디오 2021 Winter project",
             description="와플스튜디오 겨울 프로젝트 진행을 위한 채널입니다.",
         )
-        self.channel2.managers.set([self.user])
 
         self.channel3 = Channel.objects.create(
             name="서울대학교 총학생회", description="안녕하세요, 서울대학교 총학생회입니다."
@@ -296,6 +301,14 @@ class ChannelSearchTest(TestCase):
         type = "all"
         keyword = "와플"
         all_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+        data = all_search.json()["results"]
+
+        self.assertEqual(len(data), 2)
+        result_1 = data[0]
+        self.assertEqual(result_1["name"], "와플스튜디오 2021 Winter project")
+        self.assertEqual(result_1["description"], "와플스튜디오 겨울 프로젝트 진행을 위한 채널입니다.")
+        self.assertIn("is_private", result_1)
+        self.assertIn("is_official", result_1)
 
         self.assertEqual(all_search.status_code, 200)
 
@@ -303,6 +316,18 @@ class ChannelSearchTest(TestCase):
         type = "description"
         keyword = "맛있는"
         description_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+        data = description_search.json()["results"]
+
+        self.assertEqual(len(data), 1)
+
+        result_1 = data[0]
+        self.assertEqual(result_1["name"], "wafflestudio")
+        self.assertEqual(
+            result_1["description"],
+            "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+        )
+        self.assertIn("is_private", result_1)
+        self.assertIn("is_official", result_1)
 
         self.assertEqual(description_search.status_code, 200)
 
@@ -310,6 +335,18 @@ class ChannelSearchTest(TestCase):
         type = "name"
         keyword = "wafflestudio"
         name_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+        data = name_search.json()["results"]
+
+        self.assertEqual(len(data), 1)
+
+        result_1 = data[0]
+        self.assertEqual(result_1["name"], "wafflestudio")
+        self.assertEqual(
+            result_1["description"],
+            "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+        )
+        self.assertIn("is_private", result_1)
+        self.assertIn("is_official", result_1)
 
         self.assertEqual(name_search.status_code, 200)
 
@@ -322,7 +359,7 @@ class ChannelSearchTest(TestCase):
 
         self.assertEqual(less_than_two_search.status_code, 400)
 
-    def test_less_than_two_letters_2(self):
+    def test_invalid_keyword(self):
         type = "all"
         keyword = "검색되지않는단어"
         not_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
