@@ -108,12 +108,12 @@ jobs:
           repository: wafflestudio/snuday-server/snuday-server-image
 
       - name: executing remote ssh commands using password
-          uses: appleboy/ssh-action@master
-          with:
-            host: ${{ secrets.HOST }}
-            username: ubuntu
-            script: |
-              pwd
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ubuntu
+          script: |
+            pwd
 
       - name: send slack noti
         run: |
