@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.channel.models import Channel
+from apps.event.serializers import EventSerializer, EventChannelNameSerializer
 from apps.core.utils import get_object_or_400
 from apps.event.models import Event
 from apps.event.serializers import EventSerializer
@@ -11,7 +12,12 @@ from apps.notice.permission import IsOwnerOrReadOnly
 
 class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
     queryset = Event.objects.all()
-    serializer_class = EventSerializer
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return EventChannelNameSerializer
+        return EventSerializer
+
     permission_classes = [IsOwnerOrReadOnly()]
 
     def get_permissions(self):
@@ -153,7 +159,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
 
 class UserEventViewSet(viewsets.GenericViewSet):
     queryset = Event.objects.all()
-    serializer_class = EventSerializer
+    serializer_class = EventChannelNameSerializer
     permission_classes = [IsAuthenticated]
 
     def list(self, request, user_pk):
