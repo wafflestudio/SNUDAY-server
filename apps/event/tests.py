@@ -580,6 +580,21 @@ class PrivateChannelEventTest(TestCase):
             has_time=False,
         )
 
+    def test_manager_get_event(self):
+        self.client.force_authenticate(user=self.manager)
+        response = self.client.get(
+            f"/api/v1/channels/{self.channel_id}/events/{self.event_1.id}/"
+        )
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(data["title"], "event title")
+        self.assertEqual(data["memo"], "event memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+
     def test_manager_patch_event(self):
         self.client.force_authenticate(user=self.manager)
 
@@ -622,6 +637,14 @@ class PrivateChannelEventTest(TestCase):
 
         data = response.json()
         delete_event_id = data["id"]
+
+        response = self.client.get(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(delete_event_id)
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
 
         response = self.client.delete(
             "/api/v1/channels/{}/events/{}/".format(
