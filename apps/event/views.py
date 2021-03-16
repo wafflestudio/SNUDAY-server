@@ -8,6 +8,8 @@ from apps.core.utils import get_object_or_400
 from apps.event.models import Event
 from apps.event.serializers import EventSerializer
 from apps.notice.permission import IsOwnerOrReadOnly
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 
 class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
@@ -59,15 +61,25 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
     def list(self, request, channel_pk):
         channel = get_object_or_400(Channel, id=channel_pk)
 
-        if (
-            channel.is_private
-            and not channel.managers.filter(id=request.user.id).exists()
+        params = request.query_params
+        date = self.request.GET.get("date", "")
+
+        if channel.is_private and not (
+            channel.managers.filter(id=request.user.id).exists()
+            or channel.subscribers.filter(id=request.user.id).exists()
         ):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
             )
 
         qs = self.get_queryset().filter(channel=channel)
+
+        if date:
+            start_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
+            due_date = start_date + timedelta(days=1)
+            qs = qs.filter(
+                has_time=True, start_date__lt=due_date, due_date__gt=start_date
+            )
 
         page = self.paginate_queryset(qs)
 
@@ -83,6 +95,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
 
         if channel.is_private and not (
             channel.managers.filter(id=request.user.id).exists()
+            or channel.subscribers.filter(id=request.user.id).exists()
         ):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
@@ -169,11 +182,22 @@ class UserEventViewSet(viewsets.GenericViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        params = request.query_params
+        date = self.request.GET.get("date", "")
+
         channel_list = request.user.subscribing_channels.all().values_list(
             "id", flat=True
         )
 
         qs = Event.objects.filter(channel__in=list(channel_list))
+
+        if date:
+            start_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
+            due_date = start_date + timedelta(days=1)
+            qs = qs.filter(
+                has_time=True, start_date__lt=due_date, due_date__gt=start_date
+            )
+
         serializer = self.get_serializer(qs, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)

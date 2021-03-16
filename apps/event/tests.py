@@ -397,6 +397,7 @@ class PublicChannelEventTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertIn("error", response.json())
 
         event_count = Event.objects.count()
         self.assertEqual(event_count, 1)
@@ -579,6 +580,21 @@ class PrivateChannelEventTest(TestCase):
             has_time=False,
         )
 
+    def test_manager_get_event(self):
+        self.client.force_authenticate(user=self.manager)
+        response = self.client.get(
+            f"/api/v1/channels/{self.channel_id}/events/{self.event_1.id}/"
+        )
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(data["title"], "event title")
+        self.assertEqual(data["memo"], "event memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+
     def test_manager_patch_event(self):
         self.client.force_authenticate(user=self.manager)
 
@@ -621,6 +637,14 @@ class PrivateChannelEventTest(TestCase):
 
         data = response.json()
         delete_event_id = data["id"]
+
+        response = self.client.get(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(delete_event_id)
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
 
         response = self.client.delete(
             "/api/v1/channels/{}/events/{}/".format(
@@ -688,6 +712,7 @@ class PrivateChannelEventTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertIn("error", response.json())
 
         response = self.client.get("/api/v1/users/me/events/")
 
@@ -695,3 +720,160 @@ class PrivateChannelEventTest(TestCase):
 
         data = response.json()
         self.assertEqual(len(data), 0)
+
+    def test_subscriber_event(self):
+        self.client.force_authenticate(user=self.watcher)
+        subscribe = self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+        self.assertEqual(subscribe.status_code, 204)
+
+        self.client.force_authenticate(user=self.manager)
+        allow = self.client.post(
+            f"/api/v1/channels/{self.channel_id}/awaiters/allow/{self.watcher.id}/"
+        )
+        self.assertEqual(allow.status_code, 200)
+
+        response = self.client.get(f"/api/v1/channels/{self.channel_id}/events/")
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(
+            f"/api/v1/channels/{self.channel_id}/events/{self.event_1.id}/"
+        )
+        self.assertEqual(response.status_code, 200)
+
+
+class ParticularDateEventTest(TestCase):
+    def setUp(self):
+        self.manager = User.objects.create_user(
+            username="manager",
+            email="manager@email.com",
+            password="password",
+            first_name="first",
+            last_name="last",
+        )
+
+        self.b = User.objects.create_user(
+            username="testuser2",
+            email="email2@email.com",
+            password="password",
+            first_name="first",
+            last_name="last",
+        )
+
+        self.channel = Channel.objects.create(
+            name="wafflestudio",
+            description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            is_private=False,
+        )
+
+        self.channel_2 = Channel.objects.create(
+            name="서울대학교 ETL",
+            description="서버가 종종 터져요",
+            is_private=False,
+        )
+
+        self.channel_id = self.channel.id
+        self.channel_2_id = self.channel_2.id
+
+        self.channel.managers.set([self.manager])
+        self.channel_2.managers.set([self.manager])
+
+        self.client = APIClient()
+
+        self.event_1 = Event.objects.create(
+            title="event title",
+            memo="event memo",
+            channel=self.channel,
+            writer=self.manager,
+            has_time=False,
+        )
+
+        self.event_2 = Event.objects.create(
+            title="event title2",
+            memo="event memo2",
+            channel=self.channel,
+            writer=self.manager,
+            has_time=True,
+            start_date="1998-12-11T00:00:00+09:00",
+            due_date="2021-12-11T00:00:00+09:00",
+        )
+
+        self.event_3 = Event.objects.create(
+            title="event title3",
+            memo="event memo3",
+            channel=self.channel,
+            writer=self.manager,
+            has_time=True,
+            start_date="2021-03-15T00:00:00+09:00",
+            due_date="2021-03-15T02:00:00+09:00",
+        )
+
+        self.event_4 = Event.objects.create(
+            title="event title4",
+            memo="event memo4",
+            channel=self.channel,
+            writer=self.manager,
+            has_time=True,
+            start_date="2021-03-15T00:00:00+09:00",
+            due_date="2021-03-16T00:00:00+09:00",
+        )
+
+        self.event_5 = Event.objects.create(
+            title="서버가 터짐",
+            memo="등록금 환불해줘야할듯",
+            channel=self.channel_2,
+            writer=self.manager,
+            has_time=True,
+            start_date="2021-03-15T00:00:00+09:00",
+            due_date="2021-03-17T00:00:00+09:00",
+        )
+
+    def test_subscribing_channel_events(self):
+        self.client.force_authenticate(user=self.b)
+
+        subscribe = self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+
+        date_1 = "2021-03-15"
+        date_1_result = self.client.get(f"/api/v1/users/me/events/?date={date_1}")
+
+        data = date_1_result.json()
+        self.assertEqual(date_1_result.status_code, 200)
+        self.assertEqual(len(data), 3)
+
+        event_result_1 = data[2]
+        self.assertEqual(event_result_1["title"], "event title4")
+        self.assertEqual(event_result_1["memo"], "event memo4")
+
+        subscribe_2 = self.client.post(
+            f"/api/v1/channels/{self.channel_2_id}/subscribe/"
+        )
+
+        date_2 = "2021-03-16"
+        date_2_result = self.client.get(f"/api/v1/users/me/events/?date={date_2}")
+        data_2 = date_2_result.json()
+        self.assertEqual(date_2_result.status_code, 200)
+        self.assertEqual(len(data_2), 2)
+        event_result_2 = data_2[1]
+        self.assertEqual(event_result_2["title"], "서버가 터짐")
+        self.assertEqual(event_result_2["memo"], "등록금 환불해줘야할듯")
+
+    def test_channel_events(self):
+        self.client.force_authenticate(user=self.b)
+
+        date = "2021-03-15"
+        date_result = self.client.get(
+            f"/api/v1/channels/{self.channel_id}/events/?date={date}"
+        )
+        self.assertEqual(date_result.status_code, 200)
+
+        data = date_result.json()["results"]
+        self.assertEqual(len(data), 3)
+        event_result = data[0]
+        self.assertEqual(event_result["title"], "event title4")
+        self.assertEqual(event_result["memo"], "event memo4")
+
+        date_2 = "2021-03-20"
+        no_result = self.client.get(
+            f"/api/v1/channels/{self.channel_2_id}/events/?date={date_2}"
+        )
+        self.assertEqual(no_result.status_code, 200)
+        self.assertEqual(len(no_result.json()["results"]), 0)

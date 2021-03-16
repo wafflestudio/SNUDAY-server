@@ -158,27 +158,26 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         search_keyword = self.request.GET.get("q", "")
         search_type = self.request.GET.get("type", "")
 
-        if len(param["q"]) < 2:
+        if len(search_keyword) < 2:
             return Response(
                 {"error": "검색어를 두 글자 이상 입력해주세요"}, status=status.HTTP_400_BAD_REQUEST
             )
 
         if search_keyword:
-            if len(search_keyword) >= 2:
-                if search_type == "all":
-                    qs = qs.filter(
-                        Q(title__icontains=search_keyword)
-                        | Q(contents__icontains=search_keyword)
-                    )
-                elif search_type == "title":
-                    qs = qs.filter(Q(title__icontains=search_keyword))
-                elif search_type == "contents":
-                    qs = qs.filter(Q(contents__icontains=search_keyword))
+            if search_type == "all":
+                qs = qs.filter(
+                    Q(title__icontains=search_keyword)
+                    | Q(contents__icontains=search_keyword)
+                )
+            elif search_type == "title":
+                qs = qs.filter(Q(title__icontains=search_keyword))
+            elif search_type == "contents":
+                qs = qs.filter(Q(contents__icontains=search_keyword))
 
-        if not qs.exists():
-            return Response(
-                {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            if not qs.exists():
+                return Response(
+                    {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+                )
 
         page = self.paginate_queryset(qs)
 
@@ -235,21 +234,20 @@ class UserNoticeViewSet(viewsets.GenericViewSet):
             )
 
         if search_keyword:
-            if len(search_keyword) >= 2:
-                if search_type == "all":
-                    qs = qs.filter(
-                        Q(title__icontains=search_keyword)
-                        | Q(contents__icontains=search_keyword)
-                    )
-                elif search_type == "title":
-                    qs = qs.filter(Q(title__icontains=search_keyword))
-                elif search_type == "contents":
-                    qs = qs.filter(Q(contents__icontains=search_keyword))
+            if search_type == "all":
+                qs = qs.filter(
+                    Q(title__icontains=search_keyword)
+                    | Q(contents__icontains=search_keyword)
+                )
+            elif search_type == "title":
+                qs = qs.filter(Q(title__icontains=search_keyword))
+            elif search_type == "contents":
+                qs = qs.filter(Q(contents__icontains=search_keyword))
 
-        if not qs.exists():
-            return Response(
-                {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            if not qs.exists():
+                return Response(
+                    {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+                )
 
         page = self.paginate_queryset(qs)
 
