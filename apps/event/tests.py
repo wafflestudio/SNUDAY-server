@@ -397,6 +397,7 @@ class PublicChannelEventTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertIn("error", response.json())
 
         event_count = Event.objects.count()
         self.assertEqual(event_count, 1)
@@ -709,6 +710,11 @@ class PrivateChannelEventTest(TestCase):
         self.assertEqual(allow.status_code, 200)
 
         response = self.client.get(f"/api/v1/channels/{self.channel_id}/events/")
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(
+            f"/api/v1/channels/{self.channel_id}/events/{self.event_1.id}/"
+        )
         self.assertEqual(response.status_code, 200)
 
 

@@ -89,6 +89,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
 
         if channel.is_private and not (
             channel.managers.filter(id=request.user.id).exists()
+            or channel.subscribers.filter(id=request.user.id).exists()
         ):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
