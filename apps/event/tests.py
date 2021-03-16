@@ -688,6 +688,7 @@ class PrivateChannelEventTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertIn("error", response.json())
 
         response = self.client.get("/api/v1/users/me/events/")
 
@@ -695,6 +696,20 @@ class PrivateChannelEventTest(TestCase):
 
         data = response.json()
         self.assertEqual(len(data), 0)
+
+    def test_subscriber_event(self):
+        self.client.force_authenticate(user=self.watcher)
+        subscribe = self.client.post(f"/api/v1/channels/{self.channel_id}/subscribe/")
+        self.assertEqual(subscribe.status_code, 204)
+
+        self.client.force_authenticate(user=self.manager)
+        allow = self.client.post(
+            f"/api/v1/channels/{self.channel_id}/awaiters/allow/{self.watcher.id}/"
+        )
+        self.assertEqual(allow.status_code, 200)
+
+        response = self.client.get(f"/api/v1/channels/{self.channel_id}/events/")
+        self.assertEqual(response.status_code, 200)
 
 
 class ParticularDateEventTest(TestCase):
