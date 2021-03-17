@@ -20,3 +20,26 @@ class NoticeSerializer(serializers.ModelSerializer):
             "updated_at",
             "images",
         )
+
+
+# serializer for notice data with CHANNEL NAME
+class NoticeChannelNameSerializer(serializers.ModelSerializer):
+    channel_name = serializers.SerializerMethodField()
+    images = serializers.ImageField(required=False)
+
+    class Meta:
+        model = Notice
+        fields = (
+            "id",
+            "title",
+            "contents",
+            "channel",
+            "channel_name",
+            "writer",
+            "created_at",
+            "updated_at",
+            "images",
+        )
+
+    def get_channel_name(self, notice):
+        return notice.channel.name
