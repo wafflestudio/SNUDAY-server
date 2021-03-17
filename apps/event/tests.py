@@ -178,6 +178,38 @@ class EventTest(TestCase):
             "/api/v1/channels/{}/events/{}/".format(
                 str(self.channel_id), str(event_id)
             ),
+            {
+                "has_time": True,
+                "start_date": None,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Event.objects.count(), 1)
+
+        self.assertFalse(Event.objects.filter(id=event_id).first().has_time)
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(event_id)
+            ),
+            {
+                "has_time": True,
+                "due_date": None,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Event.objects.count(), 1)
+
+        self.assertFalse(Event.objects.filter(id=event_id).first().has_time)
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(event_id)
+            ),
             format="json",
         )
 
