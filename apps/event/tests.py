@@ -165,6 +165,7 @@ class EventTest(TestCase):
             ),
             {
                 "has_time": True,
+                "start_date": None,
             },
             format="json",
         )
