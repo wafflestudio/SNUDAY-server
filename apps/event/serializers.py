@@ -20,6 +20,7 @@ class EventSerializer(serializers.ModelSerializer):
         )
 
 
+# serializer for event data with CHANNEL NAME
 class EventChannelNameSerializer(serializers.ModelSerializer):
     channel_name = serializers.SerializerMethodField()
 
