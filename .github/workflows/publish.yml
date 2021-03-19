@@ -121,7 +121,7 @@ jobs:
           script: |
             cd /home/ubuntu/snuday/
             echo "DOCKER_TOKEN" | docker login https://docker.pkg.github.com -u "$DOCKER_USERNAME" --password-stdin
-            docker-compose pull
+            docker pull docker.pkg.github.com/wafflestudio/snuday-server/server-image
             docker-compose up -d
 
       - name: send slack noti
