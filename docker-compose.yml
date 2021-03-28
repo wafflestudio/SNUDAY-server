@@ -2,6 +2,7 @@ version: "3.7"
 
 services:
   middle:
+    image: docker.pkg.github.com/wafflestudio/snuday-server/server-image
     build:
       context: .
       dockerfile: Dockerfile

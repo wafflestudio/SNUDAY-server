@@ -4,15 +4,21 @@ from rest_framework.response import Response
 
 from apps.notice.models import Notice, NoticeImage
 from apps.channel.models import Channel
-from apps.notice.serializers import NoticeSerializer
+from apps.notice.serializers import NoticeSerializer, NoticeChannelNameSerializer
 from apps.notice.permission import IsOwnerOrReadOnly
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
+from apps.core.utils import get_object_or_400
 
 
 class NoticeIdViewSet(viewsets.GenericViewSet):
     queryset = Notice.objects.all()
-    serializer_class = NoticeSerializer
+
+    def get_serializer_class(self):
+        if self.action in ["retrieve"]:
+            return NoticeChannelNameSerializer
+        return NoticeSerializer
+
     permission_classes = [IsOwnerOrReadOnly()]
 
     def get_permissions(self):
@@ -41,30 +47,26 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, channel_pk):
-        queryset = self.get_queryset()
-        param = request.query_params
+        channel = get_object_or_400(Channel, id=channel_pk)
 
-        channel = Channel.objects.filter(id=channel_pk).first()
-
-        if channel == None:
-            return Response(
-                {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if channel.is_private and not (channel.managers.filter(id=request.user.id)):
+        if (
+            channel.is_private
+            and not channel.managers.filter(id=request.user.id).exists()
+        ):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
             )
 
-        data = queryset.filter(channel=channel_pk)
-        recent_notices = 10
+        qs = self.get_queryset().filter(channel=channel)
 
-        if param.get("recent", "") == "True":
-            if data.count() > recent_notices:
-                data = data[0:recent_notices]
+        page = self.paginate_queryset(qs)
 
-        serializer = self.get_serializer(data, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if page is not None:
+            data = self.get_serializer(page, many=True).data
+            return self.get_paginated_response(data)
+
+        data = self.get_serializer(qs, many=True)
+        return Response(data, status=status.HTTP_200_OK)
 
     def retrieve(self, request, channel_pk, pk):
         queryset = self.get_queryset()
@@ -183,6 +185,33 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
 
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
+
+
+# bring recent 10 notices
+class NoticeRecentViewSet(viewsets.GenericViewSet):
+    queryset = Notice.objects.all()
+    serializer_class = NoticeChannelNameSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=["GET"])
+    def recent_notices(self, request, pk=None):
+        channel = get_object_or_400(Channel, id=pk)
+
+        if channel.is_private and not (channel.managers.filter(id=request.user.id)):
+            return Response(
+                {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
+            )
+
+        data = Notice.objects.filter(channel=channel.id).order_by("-created_at")
+
+        RECENT_NOTICES = 3
+        num_items = data.count()
+
+        if num_items > RECENT_NOTICES:
+            data = data[:RECENT_NOTICES]
+
+        serializer = self.get_serializer(data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserNoticeViewSet(viewsets.GenericViewSet):

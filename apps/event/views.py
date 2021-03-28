@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.channel.models import Channel
+from apps.event.serializers import EventSerializer, EventChannelNameSerializer
 from apps.core.utils import get_object_or_400
 from apps.event.models import Event
 from apps.event.serializers import EventSerializer
@@ -13,7 +14,12 @@ from django.utils import timezone
 
 class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
     queryset = Event.objects.all()
-    serializer_class = EventSerializer
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return EventChannelNameSerializer
+        return EventSerializer
+
     permission_classes = [IsOwnerOrReadOnly()]
 
     def get_permissions(self):
@@ -37,14 +43,19 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
 
         data["channel"] = channel.id
         data["has_time"] = request.data.get("has_time", False)
-        data["start_date"] = request.data.get("start_date", None)
-        data["due_date"] = request.data.get("due_date", None)
 
-        if data["has_time"] and ((not data["start_date"]) or (not data["due_date"])):
-            return Response(
-                {"error": "Time information is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if data["has_time"]:
+            data["start_date"] = request.data.get("start_date", None)
+            data["due_date"] = request.data.get("due_date", None)
+
+            if (data["start_date"] is None) or (data["due_date"] is None):
+                return Response(
+                    {"error": "Time information is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            data["start_date"] = None
+            data["due_date"] = None
 
         serializer = EventSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -124,14 +135,19 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             )
 
         data["has_time"] = request.data.get("has_time", False)
-        data["start_date"] = request.data.get("start_date", event.start_date)
-        data["due_date"] = request.data.get("due_date", event.due_date)
 
-        if data["has_time"] and ((not data["start_date"]) or (not data["due_date"])):
-            return Response(
-                {"error": "Time information is required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if data["has_time"]:
+            data["start_date"] = request.data.get("start_date", None)
+            data["due_date"] = request.data.get("due_date", None)
+
+            if (data["start_date"] is None) or (data["due_date"] is None):
+                return Response(
+                    {"error": "Time information is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            data["start_date"] = None
+            data["due_date"] = None
 
         serializer = self.get_serializer(event, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -166,7 +182,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
 
 class UserEventViewSet(viewsets.GenericViewSet):
     queryset = Event.objects.all()
-    serializer_class = EventSerializer
+    serializer_class = EventChannelNameSerializer
     permission_classes = [IsAuthenticated]
 
     def list(self, request, user_pk):

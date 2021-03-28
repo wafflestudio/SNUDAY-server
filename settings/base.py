@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "drf_yasg",
+    "storages",
     "debug_toolbar",
     "apps.user",
     "apps.channel",
@@ -121,5 +122,24 @@ STATIC_URL = "/static/"
 
 AUTH_USER_MODEL = "user.User"
 
+
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+
+AWS_STORAGE_BUCKET_NAME = "snuday-bucket"
+AWS_S3_REGION_NAME = "ap-northeast-2"
+AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID", "")
+AWS_S3_SECRET_ACCESS_KEY = os.getenv("AWS_S3_SECRET_ACCESS_KEY", "")
+
+AWS_S3_CUSTOM_DOMAIN = (
+    f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
+)
+
+AWS_LOCATION = "static"
+STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
+STATICFILES_STORAGE = "apps.core.storage.StaticStorage"
+
+# Media Setting
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
+DEFAULT_FILE_STORAGE = "apps.core.storage.MediaStorage"
