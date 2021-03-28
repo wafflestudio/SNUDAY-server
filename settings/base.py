@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "apps.channel",
     "apps.notice",
     "apps.event",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -34,6 +35,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
 ]
 
 INTERNAL_IPS = [
@@ -119,6 +121,10 @@ USE_TZ = True
 STATIC_URL = "/static/"
 
 AUTH_USER_MODEL = "user.User"
+
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 AWS_STORAGE_BUCKET_NAME = "snuday-bucket"
 AWS_S3_REGION_NAME = "ap-northeast-2"
