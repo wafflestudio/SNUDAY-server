@@ -181,54 +181,39 @@ class ChannelViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(channels, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-class ChannelSearchViewSet(viewsets.GenericViewSet):
-    serializer_class = ChannelSerializer
-    permission_classes = [ManagerCanModify]
-
-    def get_queryset(self):
-        search_keyword = self.request.GET.get("q", "")
-        search_type = self.request.GET.get("type", "")
-        channel_list = Channel.objects.all()
-        if search_keyword:
-            if len(search_keyword) >= 2:
-                if search_type == "all":
-                    search_channel_list = channel_list.filter(
-                        Q(name__icontains=search_keyword)
-                        | Q(description__icontains=search_keyword)
-                    )
-                elif search_type == "name":
-                    search_channel_list = channel_list.filter(
-                        Q(name__icontains=search_keyword)
-                    )
-                elif search_type == "description":
-                    search_channel_list = channel_list.filter(
-                        Q(description__icontains=search_keyword)
-                    )
-                return search_channel_list
-        return channel_list
-
-    def list(self, request):
+    @action(detail=False, methods=["get"])
+    def search(self, request):
         """
         # 채널 검색 API
         * params의 'type'으로 검색 타입 'all', 'name', 'description'을 받음
         * pararms의 'q'로 검색어를 받음
         """
-        qs = self.get_queryset()
+        qs = Channel.objects.all()
         param = request.query_params
         search_keyword = self.request.GET.get("q", "")
         search_type = self.request.GET.get("type", "")
-        page = self.paginate_queryset(qs)
 
         if len(param["q"]) < 2:
             return Response(
                 {"error": "검색어를 두 글자 이상 입력해주세요"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        elif not qs.exists():
-            return Response(
-                {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
-            )
+        if search_keyword:
+            if search_type == "all":
+                qs = qs.filter(
+                    Q(name__icontains=search_keyword)
+                    | Q(description__icontains=search_keyword)
+                )
+            elif search_type == "name":
+                qs = qs.filter(Q(name__icontains=search_keyword))
+            elif search_type == "description":
+                qs = qs.filter(Q(description__icontains=search_keyword))
+
+            if not qs.exists():
+                return Response(
+                    {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+                )
+        page = self.paginate_queryset(qs)
 
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
