@@ -231,9 +231,10 @@ class UserNoticeViewSet(viewsets.GenericViewSet):
         )
 
         qs = Notice.objects.filter(channel__in=list(channel_list))
-        serializer = self.get_serializer(qs, many=True)
+        page = self.paginate_queryset(qs)
+        data = self.get_serializer(page, many=True).data
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return self.get_paginated_response(data)
 
     @action(detail=False, methods=["get"])
     def search(self, request, user_pk):
