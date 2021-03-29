@@ -1,5 +1,7 @@
+from django.db import transaction
 from rest_framework import serializers
 
+from apps.channel.models import Channel, ManagerChannel
 from apps.user.models import User
 
 
@@ -33,6 +35,13 @@ class UserSerializer(serializers.ModelSerializer):
 
         return value
 
+    @transaction.atomic
     def create(self, validated_data):
-
-        return User.objects.create_user(**validated_data)
+        u = User.objects.create_user(**validated_data)
+        c = Channel.objects.create(
+            name=f"{u.username}의 채널",
+            description="개인 채널입니다.",
+            is_private=True,
+        )
+        ManagerChannel.objects.create(user=u, channel=c)
+        return u

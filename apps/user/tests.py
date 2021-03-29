@@ -44,6 +44,7 @@ class UserCreateDeleteTest(TestCase):
         create = self.client.post("/api/v1/users/", self.data, format="json")
 
         self.assertEqual(create.status_code, 201)
+        self.assertEqual(Channel.objects.count(), 1)
 
     def test_create_without_infos_will_fail(self):
         keys = self.data.keys()
