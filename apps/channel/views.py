@@ -63,12 +63,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
-    def list(self, request):
-        qs = self.get_queryset()
-        page = self.paginate_queryset(qs)
-        data = self.get_serializer(page, many=True).data
-        return self.get_paginated_response(data)
-
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk):
         """
