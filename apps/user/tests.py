@@ -14,6 +14,15 @@ class UserCreateDeleteTest(TestCase):
             first_name="first",
             last_name="last",
         )
+
+        self.b = User.objects.create_user(
+            username="testuser2",
+            email="email2@email.com",
+            password="password",
+            first_name="first",
+            last_name="last",
+        )
+
         self.data = {
             "username": "snuday",
             "password": "password",
@@ -83,7 +92,7 @@ class UserCreateDeleteTest(TestCase):
         self.assertEqual(get.status_code, 200)
 
     def test_update_user(self):
-        self.client.force_authenticate(user=self.user)
+        self.client.force_authenticate(user=self.b)
 
         username = "apple"
         email = "samsung@snu.ac.kr"
@@ -118,6 +127,9 @@ class UserCreateDeleteTest(TestCase):
         self.assertEqual(subscribing.status_code, 200)
         self.assertEqual(len(data), 1)
 
+        others = self.client.get(f"/api/v1/users/{self.b.id}/subscribing_channels/")
+        self.assertEqual(others.status_code, 403)
+
     def test_get_users_managing_channels(self):
         self.client.force_authenticate(user=self.user)
 
@@ -129,3 +141,6 @@ class UserCreateDeleteTest(TestCase):
         self.assertEqual(managing.status_code, 200)
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0]["name"], "wafflestudio")
+
+        others = self.client.get(f"/api/v1/users/{self.b.id}/managing_channels/")
+        self.assertEqual(others.status_code, 403)

@@ -209,7 +209,7 @@ class ChannelPermissionTest(TestCase):
         not_subscribe = self.client.post(
             f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.c.id}/"
         )
-        self.assertEqual(reallow.status_code, 400)
+        self.assertEqual(not_subscribe.status_code, 400)
 
     def test_private_subscribe_and_disallow(self):
         self.client.force_authenticate(user=self.b)
@@ -221,22 +221,31 @@ class ChannelPermissionTest(TestCase):
         self.assertEqual(self.private_channel.awaiters.count(), 1)
 
         self.client.force_authenticate(user=self.user)
-        allow = self.client.delete(
+        disallow = self.client.delete(
             f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/"
         )
-        self.assertEqual(allow.status_code, 200)
+        self.assertEqual(disallow.status_code, 200)
         self.assertEqual(self.private_channel.awaiters.count(), 0)
         self.assertEqual(self.private_channel.subscribers.count(), 0)
 
-        reallow = self.client.post(
-            f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/"
-        )
-        self.assertEqual(reallow.status_code, 400)
-
-        not_subscribe = self.client.post(
+        not_subscribe = self.client.delete(
             f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.c.id}/"
         )
-        self.assertEqual(reallow.status_code, 400)
+        self.assertEqual(not_subscribe.status_code, 400)
+
+        self.client.force_authenticate(user=self.b)
+        subscribe = self.client.post(
+            f"/api/v1/channels/{self.private_channel.id}/subscribe/"
+        )
+        self.client.force_authenticate(user=self.user)
+        allow = self.client.post(
+            f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/"
+        )
+
+        redisallow = self.client.delete(
+            f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/"
+        )
+        self.assertEqual(redisallow.status_code, 400)
 
     def test_delete_last_manager_fail(self):
         self.client.force_authenticate(user=self.user)
