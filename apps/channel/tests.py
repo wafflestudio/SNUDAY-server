@@ -300,7 +300,9 @@ class ChannelSearchTest(TestCase):
     def test_all_search(self):
         type = "all"
         keyword = "와플"
-        all_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+        all_search = self.client.get(
+            f"/api/v1/channels/search/?type={type}&q={keyword}"
+        )
         data = all_search.json()["results"]
 
         self.assertEqual(len(data), 2)
@@ -315,7 +317,9 @@ class ChannelSearchTest(TestCase):
     def test_description_search(self):
         type = "description"
         keyword = "맛있는"
-        description_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+        description_search = self.client.get(
+            f"/api/v1/channels/search/?type={type}&q={keyword}"
+        )
         data = description_search.json()["results"]
 
         self.assertEqual(len(data), 1)
@@ -334,7 +338,9 @@ class ChannelSearchTest(TestCase):
     def test_name_search(self):
         type = "name"
         keyword = "wafflestudio"
-        name_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+        name_search = self.client.get(
+            f"/api/v1/channels/search/?type={type}&q={keyword}"
+        )
         data = name_search.json()["results"]
 
         self.assertEqual(len(data), 1)
@@ -354,7 +360,7 @@ class ChannelSearchTest(TestCase):
         type = "all"
         keyword = "와"
         less_than_two_search = self.client.get(
-            f"/api/v1/search/?type={type}&q={keyword}"
+            f"/api/v1/channels/search/?type={type}&q={keyword}"
         )
 
         self.assertEqual(less_than_two_search.status_code, 400)
@@ -362,6 +368,8 @@ class ChannelSearchTest(TestCase):
     def test_invalid_keyword(self):
         type = "all"
         keyword = "검색되지않는단어"
-        not_search = self.client.get(f"/api/v1/search/?type={type}&q={keyword}")
+        not_search = self.client.get(
+            f"/api/v1/channels/search/?type={type}&q={keyword}"
+        )
 
         self.assertEqual(not_search.status_code, 400)

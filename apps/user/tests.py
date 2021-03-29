@@ -21,6 +21,14 @@ class UserCreateDeleteTest(TestCase):
             "last_name": "Kim",
             "email": "snuday@snu.ac.kr",
         }
+
+        self.channel_data = {
+            "name": "wafflestudio",
+            "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            "is_private": False,
+            "managers_id": [self.user.id],
+        }
+
         self.client = APIClient()
 
     def test_create_user(self):
@@ -95,7 +103,7 @@ class UserCreateDeleteTest(TestCase):
         self.assertEqual(user.username, username)
         self.assertEqual(user.email, email)
 
-    def test_get_users_channel(self):
+    def test_get_users_subscribing_channels(self):
         self.client.force_authenticate(user=self.user)
 
         channel = Channel.objects.create(
@@ -104,7 +112,20 @@ class UserCreateDeleteTest(TestCase):
         )
         UserChannel.objects.create(user=self.user, channel=channel)
 
-        get = self.client.get("/api/v1/users/me/channels/")
+        subscribing = self.client.get("/api/v1/users/me/subscribing_channels/")
+        data = subscribing.json()["results"]
 
-        self.assertEqual(get.status_code, 200)
-        self.assertEqual(len(get.data), 1)
+        self.assertEqual(subscribing.status_code, 200)
+        self.assertEqual(len(data), 1)
+
+    def test_get_users_managing_channels(self):
+        self.client.force_authenticate(user=self.user)
+
+        create = self.client.post("/api/v1/channels/", self.channel_data, format="json")
+
+        managing = self.client.get("/api/v1/users/me/managing_channels/")
+        data = managing.json()["results"]
+
+        self.assertEqual(managing.status_code, 200)
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["name"], "wafflestudio")
