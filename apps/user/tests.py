@@ -2,7 +2,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from apps.channel.models import Channel, UserChannel
-from apps.user.models import User
+from apps.user.models import User, EmailInfo
 
 
 class UserCreateDeleteTest(TestCase):
@@ -30,6 +30,8 @@ class UserCreateDeleteTest(TestCase):
             "last_name": "Kim",
             "email": "snuday@snu.ac.kr",
         }
+
+        EmailInfo.of("snuday", True)
 
         self.channel_data = {
             "name": "wafflestudio",
@@ -97,6 +99,8 @@ class UserCreateDeleteTest(TestCase):
 
         username = "apple"
         email = "samsung@snu.ac.kr"
+
+        EmailInfo.of("samsung", True)
 
         update = self.client.put(
             "/api/v1/users/me/",

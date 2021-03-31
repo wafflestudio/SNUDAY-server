@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from apps.channel.models import Channel, ManagerChannel
 from apps.user.models import User
+from apps.user.utils import is_verified_email
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -26,6 +27,9 @@ class UserSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("중복된 이메일입니다.")
+
+        if not is_verified_email(value[: value.find("@")]):
+            raise serializers.ValidationError("인증되지 않은 이메일입니다.")
 
         return value
 
