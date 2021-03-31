@@ -143,3 +143,6 @@ STATICFILES_STORAGE = "apps.core.storage.StaticStorage"
 MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "uploads")
 DEFAULT_FILE_STORAGE = "apps.core.storage.MediaStorage"
+
+# Date input formot
+DATE_INPUT_FORMATS = ("%Y-%m-%d",)

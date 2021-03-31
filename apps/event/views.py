@@ -31,6 +31,15 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         data["writer"] = request.user.id
         channel = Channel.objects.filter(id=channel_pk).first()
 
+        if "start_date" not in data or "due_date" not in data:
+            return Response(
+                {"error": "Date information is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data["start_date"] = datetime.strptime(data["start_date"], "%Y-%m-%d").date()
+        data["due_date"] = datetime.strptime(data["due_date"], "%Y-%m-%d").date()
+
         if channel == None:
             return Response(
                 {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
@@ -55,6 +64,8 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            data["start_time"] = datetime.strptime(data["start_time"], "%H:%M").time()
+            data["due_time"] = datetime.strptime(data["due_time"], "%H:%M").time()
             start_datetime = datetime.combine(data["start_date"], data["start_time"])
             due_datetime = datetime.combine(data["due_date"], data["due_time"])
 
@@ -62,8 +73,8 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             data["start_time"] = None
             data["due_time"] = None
 
-            start_datetime = datetime(data["start_date"])
-            due_datetime = datetime(data["due_date"])
+            start_datetime = data["start_date"]
+            due_datetime = data["due_date"]
 
         if start_datetime > due_datetime:
             return Response(
@@ -80,7 +91,6 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
     def list(self, request, channel_pk):
         channel = get_object_or_400(Channel, id=channel_pk)
 
-        params = request.query_params
         date = self.request.GET.get("date", "")
         month = self.request.query_params.get("month", "")
 
@@ -149,7 +159,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
 
     def patch(self, request, channel_pk, pk):
         queryset = self.get_queryset()
-
+        data = self.request.data.copy()
         channel = Channel.objects.filter(id=channel_pk).first()
 
         if channel == None:
@@ -174,6 +184,20 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             )
 
         data["has_time"] = request.data.get("has_time", False)
+        data["start_date"] = request.data.get("start_date", None)
+        data["due_date"] = request.data.get("due_date", None)
+
+        if data["start_date"] is not None:
+            data["start_date"] = datetime.strptime(
+                data["start_date"], "%Y-%m-%d"
+            ).date()
+        else:
+            data["start_date"] = event.start_date
+
+        if data["due_date"] is not None:
+            data["due_date"] = datetime.strptime(data["due_date"], "%Y-%m-%d").date()
+        else:
+            data["due_date"] = event.due_date
 
         if data["has_time"]:
             data["start_time"] = request.data.get("start_time", None)
@@ -185,6 +209,8 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            data["start_time"] = datetime.strptime(data["start_time"], "%H:%M").time()
+            data["due_time"] = datetime.strptime(data["due_time"], "%H:%M").time()
             start_datetime = datetime.combine(data["start_date"], data["start_time"])
             due_datetime = datetime.combine(data["due_date"], data["due_time"])
 
@@ -192,8 +218,8 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             data["start_time"] = None
             data["due_time"] = None
 
-            start_datetime = datetime(data["start_date"])
-            due_datetime = datetime(data["due_date"])
+            start_datetime = data["start_date"]
+            due_datetime = data["due_date"]
 
         if start_datetime > due_datetime:
             return Response(
@@ -244,8 +270,8 @@ class UserEventViewSet(viewsets.GenericViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        params = request.query_params
         date = self.request.GET.get("date", "")
+        month = self.request.query_params.get("month", "")
 
         channel_list = request.user.subscribing_channels.all().values_list(
             "id", flat=True
