@@ -16,15 +16,14 @@ class EmailInfo(models.Model):
     is_verified = models.BooleanField(default=False)
 
     @staticmethod
-    def of(email_prefix):
-        return EmailInfo.objects.create(
-            email_prefix=email_prefix, verification_code=random_string(6)
-        )
-
-    @staticmethod
-    def of(email_prefix, is_verified):
-        return EmailInfo.objects.create(
-            email_prefix=email_prefix,
-            verification_code=random_string(6),
-            is_verified=is_verified,
-        )
+    def of(email_prefix, *args):
+        if len(args) == 0:
+            return EmailInfo.objects.create(
+                email_prefix=email_prefix, verification_code=random_string(6)
+            )
+        else:
+            return EmailInfo.objects.create(
+                email_prefix=email_prefix,
+                verification_code=random_string(6),
+                is_verified=args[0],
+            )
