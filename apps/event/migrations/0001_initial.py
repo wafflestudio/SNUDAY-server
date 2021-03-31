@@ -11,25 +11,50 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('channel', '0003_auto_20210207_1729'),
+        ("channel", "0003_auto_20210207_1729"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Event',
+            name="Event",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('contents', models.CharField(max_length=100)),
-                ('has_data', models.BooleanField()),
-                ('start_date', models.DateTimeField()),
-                ('end_date', models.DateTimeField()),
-                ('channel', models.ForeignKey(db_column='channel_id', on_delete=django.db.models.deletion.CASCADE, related_name='event_channel', to='channel.channel')),
-                ('writer', models.ForeignKey(db_column='writer_id', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='event_writer', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("contents", models.CharField(max_length=100)),
+                ("has_data", models.BooleanField()),
+                ("start_date", models.DateTimeField()),
+                ("due_date", models.DateTimeField()),
+                (
+                    "channel",
+                    models.ForeignKey(
+                        db_column="channel_id",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="event_channel",
+                        to="channel.channel",
+                    ),
+                ),
+                (
+                    "writer",
+                    models.ForeignKey(
+                        db_column="writer_id",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="event_writer",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
     ]
