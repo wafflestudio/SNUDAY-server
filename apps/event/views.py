@@ -21,10 +21,12 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             return EventChannelNameSerializer
         return EventSerializer
 
-    permission_classes = [IsOwnerOrReadOnly()]
+    permission_classes = [
+        IsOwnerOrReadOnly,
+    ]
 
     def get_permissions(self):
-        return self.permission_classes
+        return [permission() for permission in self.permission_classes]
 
     def create(self, request, channel_pk, pk=None):
         data = request.data.copy()
@@ -55,8 +57,8 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         data["has_time"] = request.data.get("has_time", False)
 
         if data["has_time"]:
-            data["start_time"] = request.data.get("start_time", None)
-            data["due_time"] = request.data.get("due_time", None)
+            data["start_time"] = request.data.get("start_time")
+            data["due_time"] = request.data.get("due_time")
 
             if (data["start_time"] is None) or (data["due_time"] is None):
                 return Response(
@@ -184,8 +186,8 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             )
 
         data["has_time"] = request.data.get("has_time", False)
-        data["start_date"] = request.data.get("start_date", None)
-        data["due_date"] = request.data.get("due_date", None)
+        data["start_date"] = request.data.get("start_date")
+        data["due_date"] = request.data.get("due_date")
 
         if data["start_date"] is not None:
             data["start_date"] = datetime.strptime(
@@ -200,8 +202,8 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             data["due_date"] = event.due_date
 
         if data["has_time"]:
-            data["start_time"] = request.data.get("start_time", None)
-            data["due_time"] = request.data.get("due_time", None)
+            data["start_time"] = request.data.get("start_time")
+            data["due_time"] = request.data.get("due_time")
 
             if data["start_time"] is not None:
                 data["start_time"] = datetime.strptime(
