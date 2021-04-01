@@ -19,6 +19,11 @@ class UserViewSet(
         "managing_channels": ChannelSerializer,
     }
 
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+        obj = queryset.get(pk=self.request.user.id)
+        return obj
+
     def get_permissions(self):
         if self.action in ("create", "login", "refresh"):
             permission_classes = [AllowAny]
@@ -26,19 +31,19 @@ class UserViewSet(
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
-    def retrieve(self, request, pk=None):
+    def retrieve(self, request, user_pk=None):
         """
         # 나의 정보 얻기
         """
-        user = request.user if pk == "me" else self.get_object()
+        user = request.user if user_pk == "me" else self.get_object()
         return Response(self.get_serializer(user).data)
 
-    def update(self, request, pk=None):
+    def update(self, request, user_pk=None):
         """
         # 업데이트하기
         * 다른 이의 정보를 업데이트 할 수 없음
         """
-        if pk != "me":
+        if user_pk != "me":
             return Response(
                 "다른 사람의 정보를 업데이트 할 수 없습니다.", status=status.HTTP_403_FORBIDDEN
             )
@@ -52,11 +57,11 @@ class UserViewSet(
         return Response(serializer.data)
 
     @action(detail=True, methods=["GET"])
-    def subscribing_channels(self, request, pk=None):
+    def subscribing_channels(self, request, user_pk=None):
         """
         # 구독 중인 채널
         """
-        if pk != "me":
+        if user_pk != "me":
             return Response(
                 "다른 이가 구독중인 채널을 볼 수 없습니다.", status=status.HTTP_403_FORBIDDEN
             )
@@ -66,11 +71,11 @@ class UserViewSet(
         return self.get_paginated_response(data)
 
     @action(detail=True, methods=["GET"])
-    def managing_channels(self, request, pk=None):
+    def managing_channels(self, request, user_pk=None):
         """
         # 관리 중인 채널
         """
-        if pk != "me":
+        if user_pk != "me":
             return Response(
                 "다른 이가 관리중인 채널을 볼 수 없습니다.", status=status.HTTP_403_FORBIDDEN
             )

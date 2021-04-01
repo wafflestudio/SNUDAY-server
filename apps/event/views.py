@@ -275,8 +275,8 @@ class UserEventViewSet(viewsets.GenericViewSet):
     serializer_class = EventChannelNameSerializer
     permission_classes = [IsAuthenticated]
 
-    def list(self, request, id):
-        if id != "me":
+    def list(self, request, user_pk):
+        if user_pk != "me":
             return Response(
                 {"error": "Cannot read others' events"},
                 status=status.HTTP_403_FORBIDDEN,

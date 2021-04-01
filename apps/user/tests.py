@@ -98,7 +98,7 @@ class UserCreateDeleteTest(TestCase):
         username = "apple"
         email = "samsung@snu.ac.kr"
 
-        update = self.client.put(
+        update = self.client.patch(
             "/api/v1/users/me/",
             {
                 "username": username,
