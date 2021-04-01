@@ -41,6 +41,14 @@ class EventTest(TestCase):
 
     def test_create_event(self):
         response = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id + 100)),
+            self.data,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+        response = self.client.post(
             "/api/v1/channels/{}/events/".format(str(self.channel_id)),
             self.data,
             format="json",
@@ -150,6 +158,27 @@ class EventTest(TestCase):
                     "start_date": "1998-12-11",
                     "due_date": "2021-03-03",
                     "has_time": True,
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        event_count = Event.objects.count()
+        self.assertEqual(event_count, 0)
+
+        response = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            json.dumps(
+                {
+                    "title": "event title",
+                    "memo": "event memo",
+                    "start_date": "2021-03-03",
+                    "due_date": "2021-03-03",
+                    "has_time": True,
+                    "start_time": "08:00",
+                    "due_time": "07:30",
                 }
             ),
             content_type="application/json",
@@ -409,6 +438,97 @@ class PublicChannelEventTest(TestCase):
         self.assertEqual(data["start_date"], "1998-12-11")
         self.assertEqual(data["due_date"], "2021-03-03")
         self.assertFalse(data["has_time"])
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {"start_date": "1998-12-11", "due_date": "2022-03-03"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIn("id", data)
+        self.assertEqual(data["title"], "updated updated title")
+        self.assertEqual(data["memo"], "updated memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2022-03-03")
+        self.assertFalse(data["has_time"])
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {
+                "has_time": True,
+                "start_time": "08:00",
+                "due_time": "09:00",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIn("id", data)
+        self.assertEqual(data["title"], "updated updated title")
+        self.assertEqual(data["memo"], "updated memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2022-03-03")
+        self.assertTrue(data["has_time"])
+        self.assertEqual(data["start_time"], "08:00:00")
+        self.assertEqual(data["due_time"], "09:00:00")
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {
+                "has_time": True,
+                "due_time": "10:00",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIn("id", data)
+        self.assertEqual(data["title"], "updated updated title")
+        self.assertEqual(data["memo"], "updated memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2022-03-03")
+        self.assertTrue(data["has_time"])
+        self.assertEqual(data["start_time"], "08:00:00")
+        self.assertEqual(data["due_time"], "10:00:00")
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {
+                "has_time": True,
+                "start_date": "2022-03-03",
+                "due_time": "05:00",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
 
     def test_manager_delete_event(self):
         self.client.force_authenticate(user=self.manager)

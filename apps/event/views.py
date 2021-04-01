@@ -203,14 +203,24 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             data["start_time"] = request.data.get("start_time", None)
             data["due_time"] = request.data.get("due_time", None)
 
+            if data["start_time"] is not None:
+                data["start_time"] = datetime.strptime(
+                    data["start_time"], "%H:%M"
+                ).time()
+            else:
+                data["start_time"] = event.start_time
+
+            if data["due_time"] is not None:
+                data["due_time"] = datetime.strptime(data["due_time"], "%H:%M").time()
+            else:
+                data["due_time"] = event.due_time
+
             if (data["start_time"] is None) or (data["due_time"] is None):
                 return Response(
                     {"error": "Time information is required."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            data["start_time"] = datetime.strptime(data["start_time"], "%H:%M").time()
-            data["due_time"] = datetime.strptime(data["due_time"], "%H:%M").time()
             start_datetime = datetime.combine(data["start_date"], data["start_time"])
             due_datetime = datetime.combine(data["due_date"], data["due_time"])
 
