@@ -219,8 +219,8 @@ class UserNoticeViewSet(viewsets.GenericViewSet):
     serializer_class = NoticeSerializer
     permission_classes = [IsAuthenticated]
 
-    def list(self, request, user_pk):
-        if user_pk != "me":
+    def list(self, request, id):
+        if id != "me":
             return Response(
                 {"error": "Cannot read others' notices"},
                 status=status.HTTP_403_FORBIDDEN,
@@ -237,13 +237,13 @@ class UserNoticeViewSet(viewsets.GenericViewSet):
         return self.get_paginated_response(data)
 
     @action(detail=False, methods=["get"])
-    def search(self, request, user_pk):
+    def search(self, request, id):
         """
         # 유저가 구독하고 있는 채널들의 공지사항 검색 API
         * params의 'type'으로 검색 타입 'all', 'title', 'contents'을 받음
         * pararms의 'q'로 검색어를 받음
         """
-        if user_pk != "me":
+        if id != "me":
             return Response(
                 {"error": "Cannot read others' notices"},
                 status=status.HTTP_403_FORBIDDEN,
