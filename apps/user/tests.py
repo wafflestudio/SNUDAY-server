@@ -113,6 +113,17 @@ class UserCreateDeleteTest(TestCase):
         self.assertEqual(user.username, username)
         self.assertEqual(user.email, email)
 
+        update = self.client.patch(
+            "/api/v1/users/2342/",
+            {
+                "username": username,
+                "email": email,
+            },
+            format="json",
+        )
+
+        self.assertEqual(update.status_code, 403)
+
     def test_get_users_subscribing_channels(self):
         self.client.force_authenticate(user=self.user)
 

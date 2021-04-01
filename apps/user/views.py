@@ -19,11 +19,6 @@ class UserViewSet(
         "managing_channels": ChannelSerializer,
     }
 
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-        obj = queryset.get(pk=self.request.user.id)
-        return obj
-
     def get_permissions(self):
         if self.action in ("create", "login", "refresh"):
             permission_classes = [AllowAny]
@@ -35,7 +30,11 @@ class UserViewSet(
         """
         # 나의 정보 얻기
         """
-        user = request.user if user_pk == "me" else self.get_object()
+        user = (
+            request.user
+            if user_pk == "me"
+            else self.queryset.get(pk=self.request.user.id)
+        )
         return Response(self.get_serializer(user).data)
 
     def update(self, request, user_pk=None):
