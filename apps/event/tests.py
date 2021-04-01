@@ -5,6 +5,7 @@ from apps.user.models import User
 from .models import Event
 import json
 from rest_framework.test import APIClient
+from datetime import datetime
 
 
 class EventTest(TestCase):
@@ -29,14 +30,24 @@ class EventTest(TestCase):
             "title": "event title",
             "memo": "event memo",
             "has_time": True,
-            "start_date": "1998-12-11T00:00:00+09:00",
-            "due_date": "2021-03-03T23:51:00+09:00",
+            "start_date": "1998-12-11",
+            "due_date": "2021-03-03",
+            "start_time": "09:00",
+            "due_time": "08:00",
         }
 
         self.client = APIClient()
         self.client.force_authenticate(user=self.manager)
 
     def test_create_event(self):
+        response = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id + 100)),
+            self.data,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
         response = self.client.post(
             "/api/v1/channels/{}/events/".format(str(self.channel_id)),
             self.data,
@@ -53,8 +64,10 @@ class EventTest(TestCase):
         self.assertEqual(data["writer"], self.manager.id)
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
-        self.assertEqual(data["start_date"], "1998-12-11T00:00:00+09:00")
-        self.assertEqual(data["due_date"], "2021-03-03T23:51:00+09:00")
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
+        self.assertEqual(data["start_time"], "09:00:00")
+        self.assertEqual(data["due_time"], "08:00:00")
 
         self.event_1 = Event.objects.create(
             title="event title",
@@ -62,10 +75,12 @@ class EventTest(TestCase):
             channel=self.channel,
             writer=self.manager,
             has_time=False,
+            start_date="1998-12-11",
+            due_date="2021-03-03",
         )
 
         response = self.client.get(
-            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            "/api/v1/channels/{}/events/?month=2021-03".format(str(self.channel_id)),
             format="json",
         )
 
@@ -84,12 +99,14 @@ class EventTest(TestCase):
             self.assertEqual(data[i]["writer"], self.manager.id)
             self.assertIn("created_at", data[i])
             self.assertIn("updated_at", data[i])
+            self.assertEqual(data[i]["start_date"], "1998-12-11")
+            self.assertEqual(data[i]["due_date"], "2021-03-03")
 
-        self.assertEqual(data[1]["start_date"], "1998-12-11T00:00:00+09:00")
-        self.assertEqual(data[1]["due_date"], "2021-03-03T23:51:00+09:00")
+        self.assertEqual(data[1]["start_time"], "09:00:00")
+        self.assertEqual(data[1]["due_time"], "08:00:00")
 
-        self.assertIsNone(data[0]["start_date"])
-        self.assertIsNone(data[0]["due_date"])
+        self.assertIsNone(data[0]["start_time"])
+        self.assertIsNone(data[0]["due_time"])
 
         response = self.client.get(
             "/api/v1/channels/{}/events/".format(str(self.channel_id + 1)),
@@ -104,6 +121,8 @@ class EventTest(TestCase):
             json.dumps(
                 {
                     "memo": "event memo",
+                    "start_date": "1998-12-11",
+                    "due_date": "2021-03-03",
                 }
             ),
             content_type="application/json",
@@ -118,6 +137,7 @@ class EventTest(TestCase):
             "/api/v1/channels/{}/events/".format(str(self.channel_id)),
             json.dumps(
                 {
+                    "title": "event title",
                     "memo": "event memo",
                 }
             ),
@@ -135,7 +155,30 @@ class EventTest(TestCase):
                 {
                     "title": "event title",
                     "memo": "event memo",
+                    "start_date": "1998-12-11",
+                    "due_date": "2021-03-03",
                     "has_time": True,
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        event_count = Event.objects.count()
+        self.assertEqual(event_count, 0)
+
+        response = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            json.dumps(
+                {
+                    "title": "event title",
+                    "memo": "event memo",
+                    "start_date": "2021-03-03",
+                    "due_date": "2021-03-03",
+                    "has_time": True,
+                    "start_time": "08:00",
+                    "due_time": "07:30",
                 }
             ),
             content_type="application/json",
@@ -151,6 +194,8 @@ class EventTest(TestCase):
             {
                 "title": "event title",
                 "memo": "event memo",
+                "start_date": "1998-12-11",
+                "due_date": "2021-03-03",
                 "has_time": False,
             },
             format="json",
@@ -172,6 +217,8 @@ class EventTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Event.objects.count(), 1)
 
+        data = response.json()
+
         self.assertFalse(Event.objects.filter(id=event_id).first().has_time)
 
         response = self.client.patch(
@@ -180,7 +227,7 @@ class EventTest(TestCase):
             ),
             {
                 "has_time": True,
-                "start_date": None,
+                "start_time": "09:00",
             },
             format="json",
         )
@@ -196,7 +243,7 @@ class EventTest(TestCase):
             ),
             {
                 "has_time": True,
-                "due_date": None,
+                "due_time": "08:00",
             },
             format="json",
         )
@@ -325,8 +372,10 @@ class PublicChannelEventTest(TestCase):
             "title": "event title",
             "memo": "event memo",
             "has_time": True,
-            "start_date": "1998-12-11T00:00:00+09:00",
-            "due_date": "2021-03-03T23:51:00+09:00",
+            "start_date": "1998-12-11",
+            "due_date": "2021-03-03",
+            "start_time": "9:00",
+            "due_time": "08:00",
         }
 
         self.client = APIClient()
@@ -336,6 +385,8 @@ class PublicChannelEventTest(TestCase):
             memo="event memo",
             channel=self.channel,
             writer=self.manager,
+            start_date="1998-12-11",
+            due_date="2021-03-03",
             has_time=False,
         )
 
@@ -360,6 +411,8 @@ class PublicChannelEventTest(TestCase):
         self.assertEqual(data["writer"], self.manager.id)
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
         self.assertFalse(data["has_time"])
 
         response = self.client.patch(
@@ -382,7 +435,100 @@ class PublicChannelEventTest(TestCase):
         self.assertEqual(data["writer"], self.manager.id)
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
         self.assertFalse(data["has_time"])
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {"start_date": "1998-12-11", "due_date": "2022-03-03"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIn("id", data)
+        self.assertEqual(data["title"], "updated updated title")
+        self.assertEqual(data["memo"], "updated memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2022-03-03")
+        self.assertFalse(data["has_time"])
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {
+                "has_time": True,
+                "start_time": "08:00",
+                "due_time": "09:00",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIn("id", data)
+        self.assertEqual(data["title"], "updated updated title")
+        self.assertEqual(data["memo"], "updated memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2022-03-03")
+        self.assertTrue(data["has_time"])
+        self.assertEqual(data["start_time"], "08:00:00")
+        self.assertEqual(data["due_time"], "09:00:00")
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {
+                "has_time": True,
+                "due_time": "10:00",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertIn("id", data)
+        self.assertEqual(data["title"], "updated updated title")
+        self.assertEqual(data["memo"], "updated memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2022-03-03")
+        self.assertTrue(data["has_time"])
+        self.assertEqual(data["start_time"], "08:00:00")
+        self.assertEqual(data["due_time"], "10:00:00")
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {
+                "has_time": True,
+                "start_date": "2022-03-03",
+                "due_time": "05:00",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
 
     def test_manager_delete_event(self):
         self.client.force_authenticate(user=self.manager)
@@ -392,6 +538,8 @@ class PublicChannelEventTest(TestCase):
             {
                 "title": "title will be deleted",
                 "memo": "memo will be deleted",
+                "start_date": "1998-12-11",
+                "due_date": "2021-03-03",
                 "has_time": False,
             },
             format="json",
@@ -424,7 +572,13 @@ class PublicChannelEventTest(TestCase):
 
         response = self.client.post(
             "/api/v1/channels/{}/events/".format(str(self.channel_id)),
-            {"title": "title", "memo": "memo", "has_time": False},
+            {
+                "title": "title",
+                "memo": "memo",
+                "start_date": "1998-12-11",
+                "due_date": "2021-03-03",
+                "has_time": False,
+            },
             format="json",
         )
 
@@ -474,10 +628,12 @@ class PublicChannelEventTest(TestCase):
         self.assertEqual(data["memo"], "event memo")
         self.assertEqual(data["channel"], self.channel_id)
         self.assertEqual(data["writer"], self.manager.id)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
 
-        response = self.client.get("/api/v1/users/me/events/")
+        response = self.client.get("/api/v1/users/me/events/?month=2021-03")
 
         self.assertEqual(response.status_code, 200)
 
@@ -492,6 +648,8 @@ class PublicChannelEventTest(TestCase):
         self.assertEqual(data["writer"], self.manager.id)
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
         self.assertFalse(data["has_time"])
 
         response = self.client.get(
@@ -505,7 +663,13 @@ class PublicChannelEventTest(TestCase):
 
         response = self.client.post(
             "/api/v1/channels/{}/events/".format(str(self.channel_id)),
-            {"title": "title", "memo": "memo", "has_time": False},
+            {
+                "title": "title",
+                "memo": "memo",
+                "start_date": "1998-12-11",
+                "due_date": "2021-03-03",
+                "has_time": False,
+            },
             format="json",
         )
 
@@ -556,6 +720,8 @@ class PublicChannelEventTest(TestCase):
         self.assertEqual(data["writer"], self.manager.id)
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
         self.assertFalse(data["has_time"])
 
 
@@ -598,8 +764,10 @@ class PrivateChannelEventTest(TestCase):
             "title": "event title",
             "memo": "event memo",
             "has_time": True,
-            "start_date": "1998-12-11T00:00:00+09:00",
-            "due_date": "2021-03-03T23:51:00+09:00",
+            "start_date": "1998-12-11",
+            "due_date": "2021-03-03",
+            "start_time": "09:00",
+            "due_time": "08:00",
         }
 
         self.client = APIClient()
@@ -609,6 +777,8 @@ class PrivateChannelEventTest(TestCase):
             memo="event memo",
             channel=self.channel,
             writer=self.manager,
+            start_date="1998-12-11",
+            due_date="2021-03-03",
             has_time=False,
         )
 
@@ -624,6 +794,8 @@ class PrivateChannelEventTest(TestCase):
         self.assertEqual(data["memo"], "event memo")
         self.assertEqual(data["channel"], self.channel_id)
         self.assertEqual(data["writer"], self.manager.id)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
 
@@ -646,6 +818,8 @@ class PrivateChannelEventTest(TestCase):
         self.assertEqual(data["memo"], "updated memo")
         self.assertEqual(data["channel"], self.channel_id)
         self.assertEqual(data["writer"], self.manager.id)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
 
@@ -657,6 +831,8 @@ class PrivateChannelEventTest(TestCase):
             {
                 "title": "title will be deleted",
                 "memo": "memo will be deleted",
+                "start_date": "1998-12-11",
+                "due_date": "2021-03-03",
                 "has_time": False,
             },
             format="json",
@@ -696,7 +872,13 @@ class PrivateChannelEventTest(TestCase):
 
         response = self.client.post(
             "/api/v1/channels/{}/events/".format(str(self.channel_id)),
-            {"title": "title", "memo": "memo", "has_time": False},
+            {
+                "title": "title",
+                "memo": "memo",
+                "start_date": "1998-12-11",
+                "due_date": "2021-03-03",
+                "has_time": False,
+            },
             format="json",
         )
 
@@ -817,6 +999,8 @@ class ParticularDateEventTest(TestCase):
             channel=self.channel,
             writer=self.manager,
             has_time=False,
+            start_date="1998-12-11",
+            due_date="2021-12-11",
         )
 
         self.event_2 = Event.objects.create(
@@ -825,8 +1009,10 @@ class ParticularDateEventTest(TestCase):
             channel=self.channel,
             writer=self.manager,
             has_time=True,
-            start_date="1998-12-11T00:00:00+09:00",
-            due_date="2021-12-11T00:00:00+09:00",
+            start_date="1998-12-11",
+            due_date="2021-12-11",
+            start_time="02:00",
+            due_time="14:00",
         )
 
         self.event_3 = Event.objects.create(
@@ -835,8 +1021,10 @@ class ParticularDateEventTest(TestCase):
             channel=self.channel,
             writer=self.manager,
             has_time=True,
-            start_date="2021-03-15T00:00:00+09:00",
-            due_date="2021-03-15T02:00:00+09:00",
+            start_date="2021-03-15",
+            due_date="2021-03-15",
+            start_time="03:00",
+            due_time="15:00",
         )
 
         self.event_4 = Event.objects.create(
@@ -845,8 +1033,10 @@ class ParticularDateEventTest(TestCase):
             channel=self.channel,
             writer=self.manager,
             has_time=True,
-            start_date="2021-03-15T00:00:00+09:00",
-            due_date="2021-03-16T00:00:00+09:00",
+            start_date="2021-03-15",
+            due_date="2021-03-16",
+            start_time="04:00",
+            due_time="16:00",
         )
 
         self.event_5 = Event.objects.create(
@@ -855,8 +1045,10 @@ class ParticularDateEventTest(TestCase):
             channel=self.channel_2,
             writer=self.manager,
             has_time=True,
-            start_date="2021-03-15T00:00:00+09:00",
-            due_date="2021-03-17T00:00:00+09:00",
+            start_date="2021-03-15",
+            due_date="2021-03-17",
+            start_time="5:00",
+            due_time="17:00",
         )
 
     def test_subscribing_channel_events(self):
@@ -883,8 +1075,8 @@ class ParticularDateEventTest(TestCase):
         date_2_result = self.client.get(f"/api/v1/users/me/events/?date={date_2}")
         data_2 = date_2_result.json()
         self.assertEqual(date_2_result.status_code, 200)
-        self.assertEqual(len(data_2), 2)
-        event_result_2 = data_2[1]
+        self.assertEqual(len(data_2), 3)
+        event_result_2 = data_2[2]
         self.assertEqual(event_result_2["title"], "서버가 터짐")
         self.assertEqual(event_result_2["memo"], "등록금 환불해줘야할듯")
 

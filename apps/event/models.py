@@ -22,5 +22,8 @@ class Event(TimeStampModel):
         db_column="channel_id",
     )
     has_time = models.BooleanField()
-    start_date = models.DateTimeField(null=True)
-    due_date = models.DateTimeField(null=True)
+    start_date = models.DateField(blank=True)
+    due_date = models.DateField(blank=True)
+
+    start_time = models.TimeField(null=True)
+    due_time = models.TimeField(null=True)

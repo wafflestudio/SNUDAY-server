@@ -17,6 +17,8 @@ class EventSerializer(serializers.ModelSerializer):
             "has_time",
             "start_date",
             "due_date",
+            "start_time",
+            "due_time",
         )
 
 
@@ -38,6 +40,8 @@ class EventChannelNameSerializer(serializers.ModelSerializer):
             "has_time",
             "start_date",
             "due_date",
+            "start_time",
+            "due_time",
         )
 
     def get_channel_name(self, event):

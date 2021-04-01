@@ -10,6 +10,7 @@ from apps.event.serializers import EventSerializer
 from apps.notice.permission import IsOwnerOrReadOnly
 from datetime import datetime, timedelta
 from django.utils import timezone
+from dateutil.relativedelta import relativedelta
 
 
 class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
@@ -30,6 +31,15 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         data["writer"] = request.user.id
         channel = Channel.objects.filter(id=channel_pk).first()
 
+        if "start_date" not in data or "due_date" not in data:
+            return Response(
+                {"error": "Date information is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data["start_date"] = datetime.strptime(data["start_date"], "%Y-%m-%d").date()
+        data["due_date"] = datetime.strptime(data["due_date"], "%Y-%m-%d").date()
+
         if channel == None:
             return Response(
                 {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
@@ -45,17 +55,32 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         data["has_time"] = request.data.get("has_time", False)
 
         if data["has_time"]:
-            data["start_date"] = request.data.get("start_date", None)
-            data["due_date"] = request.data.get("due_date", None)
+            data["start_time"] = request.data.get("start_time", None)
+            data["due_time"] = request.data.get("due_time", None)
 
-            if (data["start_date"] is None) or (data["due_date"] is None):
+            if (data["start_time"] is None) or (data["due_time"] is None):
                 return Response(
                     {"error": "Time information is required."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            data["start_time"] = datetime.strptime(data["start_time"], "%H:%M").time()
+            data["due_time"] = datetime.strptime(data["due_time"], "%H:%M").time()
+            start_datetime = datetime.combine(data["start_date"], data["start_time"])
+            due_datetime = datetime.combine(data["due_date"], data["due_time"])
+
         else:
-            data["start_date"] = None
-            data["due_date"] = None
+            data["start_time"] = None
+            data["due_time"] = None
+
+            start_datetime = data["start_date"]
+            due_datetime = data["due_date"]
+
+        if start_datetime > due_datetime:
+            return Response(
+                {"error": "The event must end after its beginning."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         serializer = EventSerializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -66,8 +91,8 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
     def list(self, request, channel_pk):
         channel = get_object_or_400(Channel, id=channel_pk)
 
-        params = request.query_params
         date = self.request.GET.get("date", "")
+        month = self.request.query_params.get("month", "")
 
         if channel.is_private and not (
             channel.managers.filter(id=request.user.id).exists()
@@ -79,11 +104,35 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
 
         qs = self.get_queryset().filter(channel=channel)
 
+        # 특정 날짜
         if date:
             start_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
             due_date = start_date + timedelta(days=1)
-            qs = qs.filter(
-                has_time=True, start_date__lt=due_date, due_date__gt=start_date
+            qs = qs.filter(start_date__lt=due_date, due_date__gt=start_date)
+
+        # 특정 달
+        elif month:
+            strip_month_begin = datetime.strptime(month, "%Y-%m")
+            month_begin = timezone.make_aware(strip_month_begin) - timedelta(days=7)
+
+            next_month = strip_month_begin + relativedelta(months=1)
+            month_end = timezone.make_aware(next_month) + timedelta(days=7)
+
+            qs = qs.filter(start_date__lte=month_end) & qs.filter(
+                due_date__gte=month_begin
+            )
+
+        # 따로 parameter가 없는 경우, 기본적으로는 현재 날짜의 달의 일정을 가져오도록
+        else:
+            today = datetime.today()
+            strip_month_begin = datetime(today.year, today.month, 1)
+            month_begin = timezone.make_aware(strip_month_begin) - timedelta(days=7)
+
+            next_month = strip_month_begin + relativedelta(months=1)
+            month_end = timezone.make_aware(next_month) + timedelta(days=7)
+
+            qs = qs.filter(start_date__lte=month_end) & qs.filter(
+                due_date__gte=month_begin
             )
 
         page = self.paginate_queryset(qs)
@@ -110,7 +159,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
 
     def patch(self, request, channel_pk, pk):
         queryset = self.get_queryset()
-
+        data = self.request.data.copy()
         channel = Channel.objects.filter(id=channel_pk).first()
 
         if channel == None:
@@ -135,19 +184,58 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
             )
 
         data["has_time"] = request.data.get("has_time", False)
+        data["start_date"] = request.data.get("start_date", None)
+        data["due_date"] = request.data.get("due_date", None)
+
+        if data["start_date"] is not None:
+            data["start_date"] = datetime.strptime(
+                data["start_date"], "%Y-%m-%d"
+            ).date()
+        else:
+            data["start_date"] = event.start_date
+
+        if data["due_date"] is not None:
+            data["due_date"] = datetime.strptime(data["due_date"], "%Y-%m-%d").date()
+        else:
+            data["due_date"] = event.due_date
 
         if data["has_time"]:
-            data["start_date"] = request.data.get("start_date", None)
-            data["due_date"] = request.data.get("due_date", None)
+            data["start_time"] = request.data.get("start_time", None)
+            data["due_time"] = request.data.get("due_time", None)
 
-            if (data["start_date"] is None) or (data["due_date"] is None):
+            if data["start_time"] is not None:
+                data["start_time"] = datetime.strptime(
+                    data["start_time"], "%H:%M"
+                ).time()
+            else:
+                data["start_time"] = event.start_time
+
+            if data["due_time"] is not None:
+                data["due_time"] = datetime.strptime(data["due_time"], "%H:%M").time()
+            else:
+                data["due_time"] = event.due_time
+
+            if (data["start_time"] is None) or (data["due_time"] is None):
                 return Response(
                     {"error": "Time information is required."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            start_datetime = datetime.combine(data["start_date"], data["start_time"])
+            due_datetime = datetime.combine(data["due_date"], data["due_time"])
+
         else:
-            data["start_date"] = None
-            data["due_date"] = None
+            data["start_time"] = None
+            data["due_time"] = None
+
+            start_datetime = data["start_date"]
+            due_datetime = data["due_date"]
+
+        if start_datetime > due_datetime:
+            return Response(
+                {"error": "The event must end after its beginning."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         serializer = self.get_serializer(event, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -192,8 +280,8 @@ class UserEventViewSet(viewsets.GenericViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        params = request.query_params
         date = self.request.GET.get("date", "")
+        month = self.request.query_params.get("month", "")
 
         channel_list = request.user.subscribing_channels.all().values_list(
             "id", flat=True
@@ -204,8 +292,29 @@ class UserEventViewSet(viewsets.GenericViewSet):
         if date:
             start_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
             due_date = start_date + timedelta(days=1)
-            qs = qs.filter(
-                has_time=True, start_date__lt=due_date, due_date__gt=start_date
+            qs = qs.filter(start_date__lt=due_date, due_date__gt=start_date)
+        elif month:
+            strip_month_begin = datetime.strptime(month, "%Y-%m")
+            month_begin = timezone.make_aware(strip_month_begin) - timedelta(days=7)
+
+            next_month = strip_month_begin + relativedelta(months=1)
+            month_end = timezone.make_aware(next_month) + timedelta(days=7)
+
+            qs = qs.filter(start_date__lte=month_end) & qs.filter(
+                due_date__gte=month_begin
+            )
+
+        # 따로 parameter가 없는 경우, 기본적으로는 현재 날짜의 달의 일정을 가져오도록
+        else:
+            today = datetime.today()
+            strip_month_begin = datetime(today.year, today.month, 1)
+            month_begin = timezone.make_aware(strip_month_begin) - timedelta(days=7)
+
+            next_month = strip_month_begin + relativedelta(months=1)
+            month_end = timezone.make_aware(next_month) + timedelta(days=7)
+
+            qs = qs.filter(start_date__lte=month_end) & qs.filter(
+                due_date__gte=month_begin
             )
 
         serializer = self.get_serializer(qs, many=True)
