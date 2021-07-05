@@ -42,6 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
             name=f"{u.username}의 채널",
             description="개인 채널입니다.",
             is_private=True,
+            is_personal=True,
         )
         ManagerChannel.objects.create(user=u, channel=c)
         return u

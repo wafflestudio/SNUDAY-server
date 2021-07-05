@@ -21,6 +21,7 @@ class ChannelSerializer(serializers.ModelSerializer):
             "description",
             "is_private",
             "is_official",
+            "is_personal",
             "created_at",
             "updated_at",
             "subscribers_count",

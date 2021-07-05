@@ -35,6 +35,7 @@ class Channel(TimeStampModel):
     description = models.TextField()
     is_private = models.BooleanField(default=False)
     is_official = models.BooleanField(default=False)
+    is_personal = models.BooleanField(default=False)
 
     image = models.OneToOneField(Image, on_delete=models.SET_NULL, null=True)
 
