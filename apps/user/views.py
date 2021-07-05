@@ -65,9 +65,8 @@ class UserViewSet(
                 "다른 이가 구독중인 채널을 볼 수 없습니다.", status=status.HTTP_403_FORBIDDEN
             )
         qs = request.user.subscribing_channels.all()
-        page = self.paginate_queryset(qs)
-        data = self.get_serializer(page, many=True).data
-        return self.get_paginated_response(data)
+        serializer = self.get_serializer(qs, many=True).data
+        return Response(serializer.data)
 
     @action(detail=True, methods=["GET"])
     def managing_channels(self, request, user_pk=None):
@@ -79,6 +78,5 @@ class UserViewSet(
                 "다른 이가 관리중인 채널을 볼 수 없습니다.", status=status.HTTP_403_FORBIDDEN
             )
         qs = request.user.managing_channels.all()
-        page = self.paginate_queryset(qs)
-        data = self.get_serializer(page, many=True).data
-        return self.get_paginated_response(data)
+        serializer = self.get_serializer(qs, many=True).data
+        return Response(serializer.data)
