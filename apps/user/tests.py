@@ -99,10 +99,8 @@ class UserCreateDeleteTest(TestCase):
 
         username = "apple"
         email = "samsung@snu.ac.kr"
-
-        EmailInfo.of("samsung", True)
-
-        update = self.client.put(
+        EmailInfo.objects.create(email_prefix="samsung", is_verified=True)
+        update = self.client.patch(
             "/api/v1/users/me/",
             {
                 "username": username,
@@ -117,6 +115,17 @@ class UserCreateDeleteTest(TestCase):
         self.assertEqual(user.username, username)
         self.assertEqual(user.email, email)
 
+        update = self.client.patch(
+            "/api/v1/users/2342/",
+            {
+                "username": username,
+                "email": email,
+            },
+            format="json",
+        )
+
+        self.assertEqual(update.status_code, 403)
+
     def test_get_users_subscribing_channels(self):
         self.client.force_authenticate(user=self.user)
 
@@ -127,7 +136,7 @@ class UserCreateDeleteTest(TestCase):
         UserChannel.objects.create(user=self.user, channel=channel)
 
         subscribing = self.client.get("/api/v1/users/me/subscribing_channels/")
-        data = subscribing.json()["results"]
+        data = subscribing.json()
 
         self.assertEqual(subscribing.status_code, 200)
         self.assertEqual(len(data), 1)
@@ -141,7 +150,7 @@ class UserCreateDeleteTest(TestCase):
         create = self.client.post("/api/v1/channels/", self.channel_data, format="json")
 
         managing = self.client.get("/api/v1/users/me/managing_channels/")
-        data = managing.json()["results"]
+        data = managing.json()
 
         self.assertEqual(managing.status_code, 200)
         self.assertEqual(len(data), 1)

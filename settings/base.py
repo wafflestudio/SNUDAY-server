@@ -152,3 +152,5 @@ EMAIL_HOST_USER = "heka1024@wafflestudio.com"  # ex) bum752@gmail.com
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")  # ex) P@ssw0rd
 SERVER_EMAIL = "heka1024@wafflestudio.com"  # ex) bum752@gmail.com
 DEFAULT_FROM_MAIL = "snuday"  # ex) bum752
+# Date input format
+DATE_INPUT_FORMATS = ("%Y-%m-%d",)

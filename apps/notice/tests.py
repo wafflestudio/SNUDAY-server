@@ -888,6 +888,18 @@ class NoticeGetTest(TestCase):
         self.assertIn("created_at", data["results"][0])
         self.assertIn("updated_at", data["results"][0])
 
+        response = self.client.get(
+            "/api/v1/users/me/notices/",
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+
+        self.assertIn("next", data)
+        self.assertIsNone(data["previous"])
+
     def test_get_recent_notices(self):
         self.client.force_authenticate(user=self.manager)
 
