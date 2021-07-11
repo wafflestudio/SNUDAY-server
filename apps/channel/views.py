@@ -114,6 +114,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def awaiters(self, request, pk):
         """
         # 대기자 명단
+        * 해당 비공개 채널을 구독하려는 대기자들의 명단을 볼 수 있음.
         """
         channel = self.get_object()
         awaiters = channel.awaiters
