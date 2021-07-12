@@ -195,6 +195,32 @@ class UserCreateDeleteTest(TestCase):
         update = self.client.patch(
             "/api/v1/users/me/change_password/",
             {
+                "old_password": "short",
+                "new_password": "short",
+            },
+            format="json",
+        )
+
+        self.assertEqual(update.status_code, 400)
+        user = User.objects.last()
+        self.assertTrue(user.check_password(old_password))
+
+        update = self.client.patch(
+            "/api/v1/users/me/change_password/",
+            {
+                "old_password": "samepassword",
+                "new_password": "samepassword",
+            },
+            format="json",
+        )
+
+        self.assertEqual(update.status_code, 400)
+        user = User.objects.last()
+        self.assertTrue(user.check_password(old_password))
+
+        update = self.client.patch(
+            "/api/v1/users/me/change_password/",
+            {
                 "old_password": old_password,
                 "new_password": new_password,
             },

@@ -106,6 +106,14 @@ class UserViewSet(
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            if serializer.data.get("old_password") == serializer.data.get(
+                "new_password"
+            ):
+                return Response(
+                    "기존 비밀번호와 새 비밀번호가 같습니다.",
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             user.set_password(serializer.data.get("new_password"))
             user.save()
 
