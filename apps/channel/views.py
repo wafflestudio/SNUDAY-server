@@ -24,7 +24,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
         """
         user = request.user
         data = request.data.copy()
-
         data["managers_id"].append(user.id)
 
         serializer = self.get_serializer(data=data)
