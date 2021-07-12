@@ -68,6 +68,14 @@ class UserCreateDeleteTest(TestCase):
 
         self.assertEqual(create.status_code, 400)
 
+    def test_create_with_short_password(self):
+        data = self.data.copy()
+        data.update(password="short")
+
+        create = self.client.post("/api/v1/users/", data, format="json")
+
+        self.assertEqual(create.status_code, 400)
+
     def test_create_with_dupliacted_username(self):
         data = self.data.copy()
         data.update(email="testuser")
@@ -208,8 +216,8 @@ class UserCreateDeleteTest(TestCase):
         update = self.client.patch(
             "/api/v1/users/me/change_password/",
             {
-                "old_password": "samepassword",
-                "new_password": "samepassword",
+                "old_password": old_password,
+                "new_password": old_password,
             },
             format="json",
         )
