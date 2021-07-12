@@ -158,3 +158,36 @@ class UserCreateDeleteTest(TestCase):
 
         others = self.client.get(f"/api/v1/users/{self.b.id}/managing_channels/")
         self.assertEqual(others.status_code, 403)
+
+    def test_change_password(self):
+        self.client.force_authenticate(user=self.b)
+
+        old_password = "password"
+        new_password = "password2"
+        wrong_password = "wrongpassword"
+
+        update = self.client.patch(
+            "/api/v1/users/me/change_password/",
+            {
+                "old_password": wrong_password,
+                "new_password": new_password,
+            },
+            format="json",
+        )
+
+        self.assertEqual(update.status_code, 400)
+        user = User.objects.last()
+        self.assertTrue(user.check_password(old_password))
+
+        update = self.client.patch(
+            "/api/v1/users/me/change_password/",
+            {
+                "old_password": old_password,
+                "new_password": new_password,
+            },
+            format="json",
+        )
+
+        self.assertEqual(update.status_code, 200)
+        user = User.objects.last()
+        self.assertTrue(user.check_password(new_password))

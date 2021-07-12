@@ -50,3 +50,14 @@ class UserSerializer(serializers.ModelSerializer):
         )
         ManagerChannel.objects.create(user=u, channel=c)
         return u
+
+
+class UserPasswordSerializer(serializers.Serializer):
+    model = User
+
+    """
+    Serializer for password change endpoint.
+    """
+
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
