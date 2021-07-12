@@ -167,6 +167,19 @@ class UserCreateDeleteTest(TestCase):
         wrong_password = "wrongpassword"
 
         update = self.client.patch(
+            "/api/v1/users/1/change_password/",
+            {
+                "old_password": old_password,
+                "new_password": new_password,
+            },
+            format="json",
+        )
+
+        self.assertEqual(update.status_code, 403)
+        user = User.objects.last()
+        self.assertTrue(user.check_password(old_password))
+
+        update = self.client.patch(
             "/api/v1/users/me/change_password/",
             {
                 "old_password": wrong_password,
