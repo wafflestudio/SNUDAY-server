@@ -42,4 +42,12 @@ urlpatterns = [
         "users/<user_pk>/managing_channels/",
         UserViewSet.as_view({"get": "managing_channels"}),
     ),
+    path(
+        "users/<user_pk>/change_password/",
+        UserViewSet.as_view(
+            {
+                "patch": "change_password",
+            }
+        ),
+    ),
 ]

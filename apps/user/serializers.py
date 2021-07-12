@@ -39,6 +39,11 @@ class UserSerializer(serializers.ModelSerializer):
 
         return value
 
+    def validate_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("비밀번호는 8글자 이상이어야 합니다.")
+        return value
+
     @transaction.atomic
     def create(self, validated_data):
         u = User.objects.create_user(**validated_data)
@@ -50,3 +55,24 @@ class UserSerializer(serializers.ModelSerializer):
         )
         ManagerChannel.objects.create(user=u, channel=c)
         return u
+
+
+class UserPasswordSerializer(serializers.Serializer):
+    model = User
+
+    """
+    Serializer for password change endpoint.
+    """
+
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_old_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("비밀번호는 8글자 이상이어야 합니다.")
+        return value
+
+    def validate_new_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("비밀번호는 8글자 이상이어야 합니다.")
+        return value

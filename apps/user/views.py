@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from apps.channel.serializers import ChannelSerializer
 from apps.core.mixins import SerializerChoiceMixin
 from apps.user.models import User, EmailInfo
-from apps.user.serializers import UserSerializer
+from apps.user.serializers import UserSerializer, UserPasswordSerializer
 from apps.user.utils import is_verified_email
 
 
@@ -19,6 +19,7 @@ class UserViewSet(
         "default": UserSerializer,
         "subscribing_channels": ChannelSerializer,
         "managing_channels": ChannelSerializer,
+        "change_password": UserPasswordSerializer,
     }
 
     def get_permissions(self):
@@ -82,6 +83,50 @@ class UserViewSet(
         qs = request.user.managing_channels.all()
         data = self.get_serializer(qs, many=True).data
         return Response(data)
+
+    @action(detail=True, methods=["PATCH"])
+    def change_password(self, request, user_pk=None):
+        """
+        비밀번호 변경하기
+        """
+
+        if user_pk != "me":
+            return Response("다른 사람의 비밀번호를 바꿀 수 없습니다.", status=status.HTTP_403_FORBIDDEN)
+
+        user = request.user
+        data = request.data.copy()
+
+        serializer = self.get_serializer(data=data, partial=True)
+
+        if serializer.is_valid():
+            # Check old password
+            if not user.check_password(serializer.data.get("old_password")):
+                return Response(
+                    {"old_password": ["Wrong password."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if serializer.data.get("old_password") == serializer.data.get(
+                "new_password"
+            ):
+                return Response(
+                    "기존 비밀번호와 새 비밀번호가 같습니다.",
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user.set_password(serializer.data.get("new_password"))
+            user.save()
+
+            response = {
+                "status": "success",
+                "code": status.HTTP_200_OK,
+                "message": "Password updated successfully",
+                "data": [],
+            }
+
+            return Response(response)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
