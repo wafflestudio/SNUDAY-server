@@ -114,6 +114,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def awaiters(self, request, pk):
         """
         # 대기자 명단
+        * 해당 (비공개)채널에 구독을 신청한 대기자들의 목록
         """
         channel = self.get_object()
         awaiters = channel.awaiters
@@ -174,6 +175,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def recommend(self, request):
         """
         # 채널 추천 API
+        * 구독자가 가장 많은 5개의 채널들을 추천해줌.
         """
         channels = Channel.objects.filter(is_private=False).order_by(
             "-subscribers_count"

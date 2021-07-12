@@ -18,6 +18,7 @@ class ChannelSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
+            "image",
             "description",
             "is_private",
             "is_official",
