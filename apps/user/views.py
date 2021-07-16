@@ -8,7 +8,6 @@ from apps.channel.serializers import ChannelSerializer
 from apps.core.mixins import SerializerChoiceMixin
 from apps.user.models import User, EmailInfo
 from apps.user.serializers import UserSerializer, UserPasswordSerializer
-from apps.user.utils import is_verified_email
 
 
 class UserViewSet(
@@ -143,6 +142,8 @@ def send_email(request):
     email = EmailMessage(
         "SNUDAY 이메일 인증", info.verification_code, to=[f"{email_prefix}@snu.ac.kr"]
     )
+
+    email.send()
 
     return Response("인증코드가 발송되었습니다.")
 
