@@ -37,7 +37,7 @@ class UserCreateDeleteTest(TestCase):
             "name": "wafflestudio",
             "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             "is_private": False,
-            "managers_id": [self.user.id],
+            "managers_id": [self.user.username],
         }
 
         self.client = APIClient()
