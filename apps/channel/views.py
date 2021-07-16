@@ -24,7 +24,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         """
         user = request.user
         data = request.data.copy()
-        data["managers_id"].append(user.id)
+        data["managers_id"].append(user.username)
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -32,8 +32,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         channel = Channel.objects.get(id=serializer.data["id"])
         for manager in data["managers_id"]:
-            channel.subscribers.add(manager)
-            channel.managers.add(manager)
+            manager_obj = User.objects.get(username=manager)
+            channel.subscribers.add(manager_obj)
+            channel.managers.add(manager_obj)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
