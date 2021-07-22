@@ -56,7 +56,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         data["channel"] = channel.id
         data["has_time"] = request.data.get("has_time", False)
 
-        if data["has_time"]:
+        if data["has_time"] is True:
             data["start_time"] = request.data.get("start_time")
             data["due_time"] = request.data.get("due_time")
 
@@ -201,7 +201,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         else:
             data["due_date"] = event.due_date
 
-        if data["has_time"]:
+        if data["has_time"] is True:
             data["start_time"] = request.data.get("start_time")
             data["due_time"] = request.data.get("due_time")
 
