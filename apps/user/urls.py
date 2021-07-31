@@ -14,6 +14,14 @@ urlpatterns = [
     path("users/mail/send/", send_email, name="user-mail-send"),
     path("users/mail/verify/", verify_email, name="user-mail-verify"),
     path(
+        "users/search/",
+        UserViewSet.as_view(
+            {
+                "get": "search",
+            }
+        ),
+    ),
+    path(
         "users/",
         UserViewSet.as_view(
             {

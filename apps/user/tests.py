@@ -238,3 +238,35 @@ class UserCreateDeleteTest(TestCase):
         self.assertEqual(update.status_code, 200)
         user = User.objects.last()
         self.assertTrue(user.check_password(new_password))
+
+    def test_username_search(self):
+        self.client.force_authenticate(user=self.user)
+        search_type = "username"
+        search_keyword = "test"
+
+        search = self.client.get(
+            f"/api/v1/users/search/?type={search_type}&q={search_keyword}",
+            format="json",
+        )
+        data = search.json()
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["username"], "testuser")
+        self.assertEqual(data[0]["first_name"], "first")
+        self.assertEqual(data[0]["last_name"], "last")
+        self.assertEqual(data[0]["email"], "email@email.com")
+
+        self.assertEqual(search.status_code, 200)
+
+        search_keyword = "wrong"
+        search = self.client.get(
+            f"/api/v1/users/search/?type={search_type}&q={search_keyword}",
+            format="json",
+        )
+        self.assertEqual(search.status_code, 400)
+
+        search_keyword = "s"
+        search = self.client.get(
+            f"/api/v1/users/search/?type={search_type}&q={search_keyword}",
+            format="json",
+        )
+        self.assertEqual(search.status_code, 400)

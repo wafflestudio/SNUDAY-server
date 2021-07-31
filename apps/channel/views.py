@@ -18,9 +18,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def create(self, request):
         """
         # 채널을 만드는 API
-        * `managers_id`는 매니저의 `id`들을 넣어야 함
+        * `managers_id`는 매니저의 `username`들을 ["user1", "user2"]와 같이 list 형식으로 넣어야 함
         * image는 얻게 된 이미지의 url을 첨부할 것
         * `is_private`은 비공개채널 여부에 대한 설정
+        * `is_personal`은 개인 채널인지 여부에 대한 설정
         """
         user = request.user
         data = request.data.copy()
@@ -40,9 +41,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, pk=None):
         """
-        # 채널을 수정 API
+        # 채널 수정 API
+        * {id}에는 channel의 id를 넣으면 됨
         * 가급적 `PUT`보다 `PATCH`를 이용할 것
-        * 만드는 것과 거의 동일
+        * POST로 channel을 만드는 것과 동일
         """
         channel = self.get_object()
         data = request.data.copy()
@@ -67,7 +69,8 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def subscribe(self, request, pk):
         """
         # 구독
-        * 이미 구독중이라면 에러
+        * {channel_pk}에는 구독하려는 channel의 id를 넣으면 됨
+        * 이미 구독중이라면 400
         * 비공개 채널이라면 대기자 명단에 올라감
         """
         channel = self.get_object()
@@ -89,7 +92,8 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def unsubscribe(self, request, pk):
         """
         # 구독 취소
-        * 구독 중이지 않다면 에러
+        * {channel_pk}에는 구독 취소하려는 channel의 id를 넣으면 됨
+        * 구독 중이지 않다면 400
         """
         user = request.user
         channel = self.get_object()
@@ -114,6 +118,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def awaiters(self, request, pk):
         """
         # 대기자 명단
+        * {id}에는 channel의 id를 넣으면 됨
         * 해당 (비공개)채널에 구독을 신청한 대기자들의 목록
         """
         channel = self.get_object()
@@ -127,7 +132,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def allow(self, request, pk, user_pk):
         """
         # 매니저가 대기자들의 구독을 수락하는 API
+        * {id}에는 channel의 id를 넣으면 됨
+        * {user_pk}에는 user의 id를 넣으면 됨
         * 채널 매니저만 가능
+        * 이미 구독중인 유저면 400
+        * 구독 신청한 적이 없는 유저면 400
         """
         user = User.objects.get(id=user_pk)
         channel = self.get_object()
@@ -152,7 +161,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def disallow(self, request, pk, user_pk):
         """
         # 매니저가 대기자들의 구독을 거절하는 API
+        * {id}에는 channel의 id를 넣으면 됨
+        * {user_pk}에는 user의 id를 넣으면 됨
         * 채널 매니저만 가능
+        * 이미 구독중인 유저면 400
+        * 구독 신청한 적이 없는 유저면 400
         """
         channel = self.get_object()
         user = User.objects.get(id=user_pk)

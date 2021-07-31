@@ -1,4 +1,5 @@
 from django.core.mail import EmailMessage
+from django.db.models import Q
 from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action, api_view
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -126,6 +127,34 @@ class UserViewSet(
             return Response(response)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["GET"])
+    def search(self, request):
+        """
+        # username 검색 API
+        * params의 'type'으로 검색 타입 'username'
+        * params의 'q'로 검색어를 받음
+        """
+        qs = User.objects.all()
+        param = request.query_params
+        search_keyword = self.request.GET.get("q", "")
+        search_type = self.request.GET.get("type", "")
+
+        if len(param["q"]) < 2:
+            return Response(
+                {"error": "검색어를 두 글자 이상 입력해주세요"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if search_keyword:
+            if search_type == "username":
+                qs = qs.filter(Q(username__icontains=search_keyword))[:5]
+
+            if not qs.exists():
+                return Response(
+                    {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
+                )
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
