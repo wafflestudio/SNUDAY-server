@@ -4,6 +4,8 @@ from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action, api_view
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from string import ascii_letters, digits, punctuation
+import secrets
 
 from apps.channel.serializers import ChannelSerializer
 from apps.core.mixins import SerializerChoiceMixin
@@ -175,6 +177,74 @@ def send_email(request):
     email.send()
 
     return Response("인증코드가 발송되었습니다.")
+
+
+@api_view(["POST"])
+def find_username(request):
+    """
+    # 아이디 찾기
+    * request의 `body`로 `email_prefix`를 주어야함
+    * 해당 메일로 가입된 아이디를 메일로 발송함.
+    """
+    email_prefix = request.data.get("email_prefix")
+
+    email_info = EmailInfo.objects.filter(email_prefix=email_prefix).first()
+
+    if email_info is not None:
+        user = User.objects.get(email=f"{email_prefix}@snu.ac.kr")
+        email = EmailMessage(
+            "SNUDAY 아이디 찾기", user.username, to=[f"{email_prefix}@snu.ac.kr"]
+        )
+        email.send()
+
+    else:
+        return Response("해당 메일로 가입된 회원이 없습니다.", status=status.HTTP_400_BAD_REQUEST)
+
+    return Response("메일로 아이디가 발송되었습니다.")
+
+
+@api_view(["POST"])
+def find_password(request):
+    """
+    # 비밀번호 임시 발급
+    * request의 `body`로 `email_prefix`를 주어야함
+    * 입력한 메일로 가입된 계정의 임시 비밀번호를 메일로 발송함.
+    """
+    email_prefix = request.data.get("email_prefix")
+
+    email_info = EmailInfo.objects.filter(email_prefix=email_prefix).first()
+
+    if email_info is not None:
+        user = User.objects.get(email=f"{email_prefix}@snu.ac.kr")
+        temp_password = new_password()
+
+        user.set_password(temp_password)
+        user.save()
+
+        email = EmailMessage(
+            "SNUDAY 비밀번호 재발급", temp_password, to=[f"{email_prefix}@snu.ac.kr"]
+        )
+        email.send()
+
+    else:
+        return Response("해당 메일로 가입된 회원이 없습니다.", status=status.HTTP_400_BAD_REQUEST)
+
+    return Response("메일로 새로 발급된 비밀번호가 발송되었습니다.")
+
+
+def new_password():
+    string_pool = ascii_letters + digits + punctuation
+
+    while True:
+        temp_password = "".join(secrets.choice(string_pool) for i in range(10))
+        if (
+            any(c.islower() for c in temp_password)
+            and any(c.isupper() for c in temp_password)
+            and sum(c.isdigit() for c in temp_password) >= 2
+        ):
+            break
+
+    return temp_password
 
 
 @api_view(["POST"])
