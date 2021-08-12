@@ -54,6 +54,7 @@ class UserSerializer(serializers.ModelSerializer):
             is_personal=True,
         )
         ManagerChannel.objects.create(user=u, channel=c)
+        c.subscribers.add(u)
         return u
 
 
