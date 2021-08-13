@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 @api_view(["get"])
 def pong(request):
-    return Response("ponggg")
+    return Response("pongpingpong!!")
 
 
 def compose(*fs):
