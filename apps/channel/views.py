@@ -26,12 +26,13 @@ class ChannelViewSet(viewsets.ModelViewSet):
         user = request.user
         data = request.data.copy()
 
-        q_channel = Channel.objects.filter(name=data["name"]).first()
+        if "name" in data:
+            q_channel = Channel.objects.filter(name=data["name"]).first()
 
-        if q_channel is not None:
-            return Response(
-                {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            if q_channel is not None:
+                return Response(
+                    {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
+                )
 
         data["managers_id"].append(user.username)
 
@@ -59,12 +60,13 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channel = self.get_object()
         data = request.data.copy()
 
-        q_channel = Channel.objects.filter(name=data["name"]).first()
-        print(q_channel)
-        if q_channel is not None:
-            return Response(
-                {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
-            )
+        if "name" in data:
+            q_channel = Channel.objects.filter(name=data["name"]).first()
+
+            if q_channel is not None:
+                return Response(
+                    {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
+                )
 
         serializer = self.get_serializer(channel, data=data, partial=True)
         validated_data = serializer.is_valid(raise_exception=True)
