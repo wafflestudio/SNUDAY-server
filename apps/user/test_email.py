@@ -63,7 +63,13 @@ class EmailTest(TestCase):
     def test_password_mail(self):
         self.assertEqual(EmailInfo.objects.count(), 1)
         send = self.client.post(
-            "/api/v1/users/find/password/", {"email_prefix": "heka1024"}
+            "/api/v1/users/find/password/",
+            {
+                "username": self.user.username,
+                "first_name": self.user.first_name,
+                "last_name": self.user.last_name,
+                "email_prefix": "heka1024",
+            },
         )
 
         self.assertEqual(send.status_code, 200)
