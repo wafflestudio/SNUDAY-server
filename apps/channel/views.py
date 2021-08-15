@@ -25,6 +25,14 @@ class ChannelViewSet(viewsets.ModelViewSet):
         """
         user = request.user
         data = request.data.copy()
+
+        q_channel = Channel.objects.filter(name=data["name"]).first()
+
+        if q_channel is not None:
+            return Response(
+                {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         data["managers_id"].append(user.username)
 
         serializer = self.get_serializer(data=data)
@@ -32,6 +40,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         channel = Channel.objects.get(id=serializer.data["id"])
+
         for manager in data["managers_id"]:
             manager_obj = User.objects.get(username=manager)
             channel.subscribers.add(manager_obj)
@@ -45,21 +54,30 @@ class ChannelViewSet(viewsets.ModelViewSet):
         * {id}에는 channel의 id를 넣으면 됨
         * 가급적 `PUT`보다 `PATCH`를 이용할 것
         * POST로 channel을 만드는 것과 동일
+        * 매니저 수정 시에 자기 자신의 아이디가 제외되는 순간 매니저에서 제외되므로 주의할 것.
         """
         channel = self.get_object()
         data = request.data.copy()
+
+        q_channel = Channel.objects.filter(name=data["name"]).first()
+        print(q_channel)
+        if q_channel is not None:
+            return Response(
+                {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         serializer = self.get_serializer(channel, data=data, partial=True)
         validated_data = serializer.is_valid(raise_exception=True)
         serializer.update(channel, serializer.validated_data)
 
         if "managers_id" in data:
-            managers = list(channel.managers.all())
-            for manager in managers:
-                if not manager in data["managers_id"]:
+            current_managers = list(channel.managers.all())
+            for manager in current_managers:
+                if not manager.username in data["managers_id"]:
                     channel.managers.remove(manager)
 
-            for manager in data["managers_id"]:
+            for manager_name in data["managers_id"]:
+                manager = User.objects.get(username=manager_name)
                 channel.subscribers.add(manager)
                 channel.managers.add(manager)
 

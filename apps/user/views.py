@@ -25,7 +25,14 @@ class UserViewSet(
     }
 
     def get_permissions(self):
-        if self.action in ("create", "login", "verify_email", "refresh"):
+        if self.action in (
+            "create",
+            "login",
+            "verify_email",
+            "refresh",
+            "find_password",
+            "find_username",
+        ):
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
@@ -211,11 +218,24 @@ def find_password(request):
     * 입력한 메일로 가입된 계정의 임시 비밀번호를 메일로 발송함.
     """
     email_prefix = request.data.get("email_prefix")
+    q_username = request.data.get("username")
+    q_first_name = request.data.get("first_name")
+    q_last_name = request.data.get("last_name")
 
     email_info = EmailInfo.objects.filter(email_prefix=email_prefix).first()
 
     if email_info is not None:
         user = User.objects.get(email=f"{email_prefix}@snu.ac.kr")
+
+        username_check = q_username == user.username
+        first_name_check = q_first_name == user.first_name
+        last_name_check = q_last_name == user.last_name
+
+        if not username_check or not first_name_check or not last_name_check:
+            return Response(
+                "입력하신 정보와 일치하는 회원이 없습니다", status=status.HTTP_400_BAD_REQUEST
+            )
+
         temp_password = new_password()
 
         user.set_password(temp_password)
