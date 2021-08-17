@@ -216,7 +216,7 @@ class NoticeRecentViewSet(viewsets.GenericViewSet):
 
 class UserNoticeViewSet(viewsets.GenericViewSet):
     queryset = Notice.objects.all()
-    serializer_class = NoticeSerializer
+    serializer_class = NoticeChannelNameSerializer
     permission_classes = [IsAuthenticated]
 
     def list(self, request, user_pk):
