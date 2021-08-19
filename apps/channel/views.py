@@ -85,6 +85,24 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+    def retrieve(self, request, pk=None):
+        """
+        # 채널 정보 GET API
+        * {id}에는 channel의 id를 넣으면 됨
+        * private channel은 `400`
+        """
+        channel = self.get_object()
+        if (
+            channel.is_private
+            and not channel.subscribers.filter(id=request.user.id).exists()
+        ):
+            return Response(
+                {"error": "private channel은 열람할 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = self.get_serializer(channel)
+        return Response(serializer.data)
+
     @action(detail=True, methods=["post"])
     def subscribe(self, request, pk):
         """
@@ -210,7 +228,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         # 채널 추천 API
         * 구독자가 가장 많은 5개의 채널들을 추천해줌.
         """
-        channels = Channel.objects.filter(is_private=False).order_by(
+        channels = Channel.objects.filter(is_private=False, is_personal=False).order_by(
             "-subscribers_count"
         )[:5]
         serializer = self.get_serializer(channels, many=True)
@@ -223,7 +241,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         * params의 'type'으로 검색 타입 'all', 'name', 'description'을 받음
         * pararms의 'q'로 검색어를 받음
         """
-        qs = Channel.objects.all()
+        qs = Channel.objects.filter(is_personal=False)
         param = request.query_params
         search_keyword = self.request.GET.get("q", "")
         search_type = self.request.GET.get("type", "")

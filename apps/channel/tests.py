@@ -381,5 +381,5 @@ class ChannelSearchTest(TestCase):
             f"/api/v1/channels/search/?type={type}&q={keyword}"
         )
         data = not_search.json()["results"]
-        self.assertEqual(not_search.status_code, 200)
+        self.assertEqual(len(data), 0)
         self.assertEqual(not_search.status_code, 200)
