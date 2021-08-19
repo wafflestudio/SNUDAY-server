@@ -244,10 +244,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
             elif search_type == "description":
                 qs = qs.filter(Q(description__icontains=search_keyword))
 
-            if not qs.exists():
-                return Response(
-                    {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
-                )
         page = self.paginate_queryset(qs)
 
         data = self.get_serializer(page, many=True).data

@@ -176,11 +176,6 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
             elif search_type == "contents":
                 qs = qs.filter(Q(contents__icontains=search_keyword))
 
-            if not qs.exists():
-                return Response(
-                    {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
-                )
-
         page = self.paginate_queryset(qs)
 
         data = self.get_serializer(page, many=True).data
@@ -273,11 +268,6 @@ class UserNoticeViewSet(viewsets.GenericViewSet):
                 qs = qs.filter(Q(title__icontains=search_keyword))
             elif search_type == "contents":
                 qs = qs.filter(Q(contents__icontains=search_keyword))
-
-            if not qs.exists():
-                return Response(
-                    {"error": "검색 결과가 없습니다."}, status=status.HTTP_400_BAD_REQUEST
-                )
 
         page = self.paginate_queryset(qs)
 

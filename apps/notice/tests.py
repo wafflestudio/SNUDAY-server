@@ -690,7 +690,9 @@ class NoticeSearchTest(TestCase):
         not_search = self.client.get(
             f"/api/v1/channels/{self.channel.id}/notices/search/?type={type}&q={keyword}"
         )
-        self.assertEqual(not_search.status_code, 400)
+        data = not_search.json()["results"]
+        self.assertEqual(not_search.status_code, 200)
+        self.assertEqual(len(data), 0)
 
     def test_search_user_notice_all(self):
         self.client.force_authenticate(user=self.watcher)
@@ -738,7 +740,9 @@ class NoticeSearchTest(TestCase):
         title_search_2 = self.client.get(
             f"/api/v1/users/me/notices/search/?type={type}&q={keyword_2}"
         )
-        self.assertEqual(title_search_2.status_code, 400)
+        data = title_search_2.json()["results"]
+        self.assertEqual(len(data), 0)
+        self.assertEqual(title_search_2.status_code, 200)
 
     def test_search_user_notice_contents(self):
         self.client.force_authenticate(user=self.watcher)
@@ -783,7 +787,9 @@ class NoticeSearchTest(TestCase):
         not_search = self.client.get(
             f"/api/v1/users/me/notices/search/?type={type}&q={keyword}"
         )
-        self.assertEqual(not_search.status_code, 400)
+        data = not_search.json()["results"]
+        self.assertEqual(len(data), 0)
+        self.assertEqual(not_search.status_code, 200)
 
     def test_search_user_others_fail(self):
         self.client.force_authenticate(user=self.watcher)
