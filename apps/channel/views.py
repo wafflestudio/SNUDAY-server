@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.channel.models import Channel
+from apps.channel.models import Channel, Image
 from apps.channel.permission import ManagerCanModify
 from apps.channel.serializers import ChannelSerializer
 from apps.user.models import User
@@ -19,7 +19,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         """
         # 채널을 만드는 API
         * `managers_id`는 매니저의 `username`들을 ["user1", "user2"]와 같이 list 형식으로 넣어야 함
-        * image는 얻게 된 이미지의 url을 첨부할 것
+        * image는 얻게 된 이미지를 첨부할 것
         * `is_private`은 비공개채널 여부에 대한 설정
         * `is_personal`은 개인 채널인지 여부에 대한 설정
         """
@@ -67,6 +67,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 return Response(
                     {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
                 )
+
+        if "image" in data:
+            image_file = data["image"]
+            image_obj = Image.objects.create(image=image_file)
+            data["image"] = image_obj
 
         serializer = self.get_serializer(channel, data=data, partial=True)
         validated_data = serializer.is_valid(raise_exception=True)
@@ -266,3 +271,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
+
+    @action(detail=False, methods=["post"])
+    def image(self, request):
+        profile.image = request.FILES["image"]
