@@ -271,7 +271,3 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
-
-    @action(detail=False, methods=["post"])
-    def image(self, request):
-        profile.image = request.FILES["image"]
