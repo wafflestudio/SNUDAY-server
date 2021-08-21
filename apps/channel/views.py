@@ -68,11 +68,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
                     {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
                 )
 
-        if "image" in data:
-            image_file = data["image"]
-            image_obj = Image.objects.create(image=image_file)
-            data["image"] = image_obj
-
         serializer = self.get_serializer(channel, data=data, partial=True)
         validated_data = serializer.is_valid(raise_exception=True)
         serializer.update(channel, serializer.validated_data)

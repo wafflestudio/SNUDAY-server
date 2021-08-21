@@ -40,6 +40,13 @@ class UserCreateDeleteTest(TestCase):
             "managers_id": [self.user.username],
         }
 
+        self.private_channel_data = {
+            "name": "wafflestudio 18-5",
+            "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            "is_private": True,
+            "managers_id": [self.user.username],
+        }
+
         self.client = APIClient()
 
     def test_create_user(self):
@@ -166,6 +173,26 @@ class UserCreateDeleteTest(TestCase):
 
         others = self.client.get(f"/api/v1/users/{self.b.id}/managing_channels/")
         self.assertEqual(others.status_code, 403)
+
+        create_private = self.client.post(
+            "/api/v1/channels/", self.private_channel_data, format="json"
+        )
+        data = create_private.json()
+        private_channel = Channel.objects.get(id=data["id"])
+
+        self.client.force_authenticate(user=self.b)
+        self.client.post(f"/api/v1/channels/{private_channel.id}/subscribe/")
+        self.assertEqual(private_channel.awaiters.count(), 1)
+
+        self.client.force_authenticate(user=self.user)
+        managing = self.client.get("/api/v1/users/me/managing_channels/")
+        data = managing.json()
+
+        self.assertEqual(managing.status_code, 200)
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[1]["name"], private_channel.name)
+        self.assertEqual(data[1]["is_private"], True)
+        self.assertEqual(data[1]["awaiters_count"], 1)
 
     def test_change_password(self):
         self.client.force_authenticate(user=self.b)

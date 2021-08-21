@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from string import ascii_letters, digits, punctuation
 import secrets
 
-from apps.channel.serializers import ChannelSerializer
+from apps.channel.serializers import ChannelSerializer, ChannelAwaiterSerializer
 from apps.core.mixins import SerializerChoiceMixin
 from apps.user.models import User, EmailInfo
 from apps.user.serializers import UserSerializer, UserPasswordSerializer
@@ -20,7 +20,7 @@ class UserViewSet(
     serializer_classes = {
         "default": UserSerializer,
         "subscribing_channels": ChannelSerializer,
-        "managing_channels": ChannelSerializer,
+        "managing_channels": ChannelAwaiterSerializer,
         "change_password": UserPasswordSerializer,
     }
 
