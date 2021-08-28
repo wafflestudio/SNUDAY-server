@@ -34,6 +34,12 @@ class ChannelViewSet(viewsets.ModelViewSet):
                     {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
                 )
 
+        if not "managers_id" in data:
+            return Response(
+                {"error": "managers_id에 manager들의 username 목록을 입력해야합니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         data["managers_id"].append(user.username)
 
         serializer = self.get_serializer(data=data)
@@ -60,7 +66,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channel = self.get_object()
         data = request.data.copy()
 
-        if "name" in data:
+        if "name" in data and channel.name != data["name"]:
             q_channel = Channel.objects.filter(name=data["name"]).first()
 
             if q_channel is not None:

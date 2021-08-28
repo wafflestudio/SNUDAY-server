@@ -55,6 +55,14 @@ urlpatterns = [
         ),
     ),
     path(
+        "users/<user_pk>/awaiting_channels/",
+        UserViewSet.as_view(
+            {
+                "get": "awaiting_channels",
+            }
+        ),
+    ),
+    path(
         "users/<user_pk>/managing_channels/",
         UserViewSet.as_view({"get": "managing_channels"}),
     ),

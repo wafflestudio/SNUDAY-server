@@ -51,7 +51,7 @@ class Channel(TimeStampModel):
         User,
         through="AwaiterChannel",
         through_fields=("channel", "user"),
-        related_name="waiting_channels",
+        related_name="awaiting_channels",
         blank=True,
     )
 
