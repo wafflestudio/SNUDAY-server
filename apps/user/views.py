@@ -21,6 +21,7 @@ class UserViewSet(
         "default": UserSerializer,
         "subscribing_channels": ChannelSerializer,
         "managing_channels": ChannelAwaiterSerializer,
+        "awaiting_channels": ChannelSerializer,
         "change_password": UserPasswordSerializer,
     }
 
@@ -62,6 +63,9 @@ class UserViewSet(
         user = request.user
         data = request.data.copy()
 
+        if "password" in data:
+            return Response("패스워드를 업데이트 할 수 없습니다.", status=status.HTTP_400_BAD_REQUEST)
+
         serializer = self.get_serializer(user, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -90,6 +94,19 @@ class UserViewSet(
                 "다른 이가 관리중인 채널을 볼 수 없습니다.", status=status.HTTP_403_FORBIDDEN
             )
         qs = request.user.managing_channels.all()
+        data = self.get_serializer(qs, many=True).data
+        return Response(data)
+
+    @action(detail=True, methods=["GET"])
+    def awaiting_channels(self, request, user_pk=None):
+        """
+        # 구독 신청 후 대기 중인 private 채널
+        """
+        if user_pk != "me":
+            return Response(
+                "다른 이가 대기중인 채널을 볼 수 없습니다.", status=status.HTTP_403_FORBIDDEN
+            )
+        qs = request.user.awaiting_channels.all()
         data = self.get_serializer(qs, many=True).data
         return Response(data)
 

@@ -141,6 +141,17 @@ class UserCreateDeleteTest(TestCase):
 
         self.assertEqual(update.status_code, 403)
 
+    def test_update_user_password_fail(self):
+        self.client.force_authenticate(user=self.b)
+
+        password = "newpassword123~"
+        update = self.client.patch(
+            "/api/v1/users/me/",
+            {"password": password},
+            format="json",
+        )
+        self.assertEqual(update.status_code, 400)
+
     def test_get_users_subscribing_channels(self):
         self.client.force_authenticate(user=self.user)
 
@@ -193,6 +204,34 @@ class UserCreateDeleteTest(TestCase):
         self.assertEqual(data[1]["name"], private_channel.name)
         self.assertEqual(data[1]["is_private"], True)
         self.assertEqual(data[1]["awaiters_count"], 1)
+
+    def test_get_users_awaiting_channels(self):
+        self.client.force_authenticate(user=self.user)
+
+        private_channel_1 = Channel.objects.create(
+            name="wafflestudio_private",
+            description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            is_private=True,
+        )
+        private_channel_2 = Channel.objects.create(
+            name="snucse_private", description="서울대학교 컴퓨터공학부 학생회 비밀 채널", is_private=True
+        )
+
+        subscribe_1 = self.client.post(
+            f"/api/v1/channels/{private_channel_1.id}/subscribe/"
+        )
+        subscribe_2 = self.client.post(
+            f"/api/v1/channels/{private_channel_2.id}/subscribe/"
+        )
+
+        awaiting = self.client.get("/api/v1/users/me/awaiting_channels/")
+        data = awaiting.json()
+        self.assertEqual(awaiting.status_code, 200)
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[1]["name"], private_channel_2.name)
+        self.assertEqual(data[1]["is_private"], True)
+        others = self.client.get(f"/api/v1/users/{self.b.id}/awaiting_channels/")
+        self.assertEqual(others.status_code, 403)
 
     def test_change_password(self):
         self.client.force_authenticate(user=self.b)

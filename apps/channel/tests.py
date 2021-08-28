@@ -38,6 +38,18 @@ class ChannelTest(TestCase):
         create = self.client.post("/api/v1/channels/", data, format="json")
         self.assertEqual(create.status_code, 201)
 
+    def test_create_without_managers_id_will_fail(self):
+        data_without_managers_id = {
+            "name": "wafflestudio",
+            "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            "is_private": False,
+        }
+
+        create = self.client.post(
+            "/api/v1/channels/", data_without_managers_id, format="json"
+        )
+        self.assertEqual(create.status_code, 400)
+
 
 class ChannelPermissionTest(TestCase):
     def setUp(self):
@@ -118,6 +130,16 @@ class ChannelPermissionTest(TestCase):
 
         channel = Channel.objects.first()
         self.assertEqual(channel.description, content)
+
+    def test_update_same_channel_name(self):
+        self.client.force_authenticate(user=self.user)
+        new_name = self.public_channel.name
+        update = self.client.patch(
+            f"/api/v1/channels/{self.public_channel.id}/",
+            {"name": new_name},
+            format="json",
+        )
+        self.assertEqual(update.status_code, 200)
 
     def test_awaiters_list(self):
         self.client.force_authenticate(user=self.user)
