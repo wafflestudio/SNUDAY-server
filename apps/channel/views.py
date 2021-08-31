@@ -55,6 +55,19 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    def list(self, request):
+        """
+        # 전체 채널 목록 API
+        * personal channel을 제외한 모든 채널의 목록을 가져옴.
+        * id의 역순으로.
+        * pagination 적용됨.
+        """
+        qs = Channel.objects.filter(is_personal=False)
+        page = self.paginate_queryset(qs)
+
+        data = self.get_serializer(page, many=True).data
+        return self.get_paginated_response(data)
+
     def partial_update(self, request, pk=None):
         """
         # 채널 수정 API

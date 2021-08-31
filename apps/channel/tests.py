@@ -91,6 +91,26 @@ class ChannelPermissionTest(TestCase):
         self.private_channel.managers.set([self.user])
         self.client = APIClient()
 
+    def test_channel_list(self):
+        self.client.force_authenticate(user=self.b)
+
+        personal_channel = Channel.objects.create(
+            name="personal channel",
+            description="저의 개인 채널입니다.",
+            is_private=True,
+            is_personal=True,
+        )
+
+        list = self.client.get(f"/api/v1/channels/")
+        self.assertEqual(list.status_code, 200)
+
+        data = list.json()["results"]
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["is_personal"], False)
+        self.assertNotEqual(data[0]["name"], "personal channel")
+        self.assertEqual(data[1]["is_personal"], False)
+        self.assertNotEqual(data[1]["name"], "personal channel")
+
     def test_delete_without_permission_will_fail(self):
         self.client.force_authenticate(user=self.b)
 
