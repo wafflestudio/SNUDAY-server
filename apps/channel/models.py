@@ -15,7 +15,7 @@ def get_path(instance, filename):
 
 
 class Image(models.Model):
-    image = models.ImageField(upload_to=get_path)
+    image = models.ImageField(upload_to="snuday/profile_pic")
 
 
 class ChannelManager(models.Manager):

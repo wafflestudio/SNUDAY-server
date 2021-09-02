@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.channel.models import Channel
+from apps.channel.models import Channel, Image
 
 # TODO: S3 연결 후 이미지 처리하기
 from apps.user.models import User
@@ -12,14 +12,14 @@ class ChannelSerializer(serializers.ModelSerializer):
         child=serializers.CharField(), write_only=True, required=False
     )
     managers = serializers.SerializerMethodField()
-    image = serializers.ImageField(required=False)
+    # image = ChannelImageSerializer(required=False)
 
     class Meta:
         model = Channel
         fields = (
             "id",
             "name",
-            "image",
+            # "image",
             "description",
             "is_private",
             "is_official",
