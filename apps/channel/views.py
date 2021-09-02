@@ -87,9 +87,13 @@ class ChannelViewSet(viewsets.ModelViewSet):
                     {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
                 )
 
+        if "image" in data:
+            image = Image.objects.create(image=data["image"], channel=channel)
+
         serializer = self.get_serializer(channel, data=data, partial=True)
-        validated_data = serializer.is_valid(raise_exception=True)
-        serializer.update(channel, serializer.validated_data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        print(serializer.data)
 
         if "managers_id" in data:
             current_managers = list(channel.managers.all())
