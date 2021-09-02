@@ -129,6 +129,9 @@ AUTH_USER_MODEL = "user.User"
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
+# MEDIA_URL = '/media/'
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 AWS_STORAGE_BUCKET_NAME = "snuday"
 AWS_S3_REGION_NAME = "ap-northeast-2"
 AWS_S3_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID", "")

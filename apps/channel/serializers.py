@@ -12,14 +12,14 @@ class ChannelSerializer(serializers.ModelSerializer):
         child=serializers.CharField(), write_only=True, required=False
     )
     managers = serializers.SerializerMethodField()
-    # image = ChannelImageSerializer(required=False)
+    image = serializers.SerializerMethodField(required=False)
 
     class Meta:
         model = Channel
         fields = (
             "id",
             "name",
-            # "image",
+            "image",
             "description",
             "is_private",
             "is_official",
@@ -33,6 +33,11 @@ class ChannelSerializer(serializers.ModelSerializer):
 
     def get_managers(self, channel):
         return UserSerializer(channel.managers, many=True, context=self.context).data
+
+    def get_image(self, channel):
+        path = Image.objects.filter(id=channel.image_id)[0].image.url
+        print(path)
+        return path
 
     def validate(self, data):
         if "managers_id" in data:
