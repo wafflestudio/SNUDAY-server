@@ -4,6 +4,8 @@ from django.urls import path, include
 
 from apps.core.utils import pong
 from settings.document import document_urls
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -17,3 +19,4 @@ urlpatterns = [
 
 
 urlpatterns += document_urls
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
