@@ -35,8 +35,10 @@ class ChannelSerializer(serializers.ModelSerializer):
         return UserSerializer(channel.managers, many=True, context=self.context).data
 
     def get_image(self, channel):
-        path = Image.objects.filter(id=channel.image_id)[0].image.url
-        print(path)
+        if Image.objects.filter(channel=channel).exists():
+            path = Image.objects.filter(id=channel.image_id).first().image.url
+        else:
+            path = None
         return path
 
     def validate(self, data):

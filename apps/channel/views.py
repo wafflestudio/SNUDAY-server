@@ -48,10 +48,19 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         channel = Channel.objects.get(id=serializer.data["id"])
 
+        if "image" in data:
+            image = Image.objects.create(image=data["image"])
+            image.channel = channel
+            image.save()
+
         for manager in data["managers_id"]:
             manager_obj = User.objects.get(username=manager)
             channel.subscribers.add(manager_obj)
             channel.managers.add(manager_obj)
+
+        serializer = self.get_serializer(channel, data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -93,7 +102,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(channel, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        print(serializer.data)
 
         if "managers_id" in data:
             current_managers = list(channel.managers.all())
