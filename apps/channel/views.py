@@ -8,6 +8,7 @@ from apps.channel.permission import ManagerCanModify
 from apps.channel.serializers import ChannelSerializer
 from apps.user.models import User
 from apps.user.serializers import UserSerializer
+import re
 
 
 class ChannelViewSet(viewsets.ModelViewSet):
@@ -40,7 +41,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        data["managers_id"].append(user.username)
+        p = re.compile('"([^",]*)"')
+        managers_list = p.findall(data["managers_id"])
+        managers_list.append(user.username)
+        data["managers_id"] = managers_list
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)

@@ -19,7 +19,7 @@ class ChannelTest(TestCase):
             "name": "wafflestudio",
             "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             "is_private": False,
-            "managers_id": [self.user.username],
+            "managers_id": f'["{self.user.username}"]',
         }
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -33,7 +33,7 @@ class ChannelTest(TestCase):
 
     def test_create_without_manager_will_success(self):
         data = self.data.copy()
-        data.update(managers_id=[])
+        data.update(managers_id="[]")
 
         create = self.client.post("/api/v1/channels/", data, format="json")
         self.assertEqual(create.status_code, 201)
