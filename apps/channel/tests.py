@@ -139,7 +139,7 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         content = "내가 할 수 있는 건"
-        new_managers = [self.b.username]
+        new_managers = f'["{self.b.username}"]'
 
         update = self.client.patch(
             f"/api/v1/channels/{self.public_channel.id}/",
@@ -293,7 +293,7 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.user)
         update = self.client.patch(
             f"/api/v1/channels/{self.public_channel.id}/",
-            {"managers_id": []},
+            {"managers_id": "[]"},
             format="json",
         )
         self.assertEqual(update.status_code, 400)
@@ -302,7 +302,7 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.user)
         add_manager = self.client.patch(
             f"/api/v1/channels/{self.public_channel.id}/",
-            {"managers_id": [self.user.username, self.b.username]},
+            {"managers_id": f'["{self.user.username}", "{self.b.username}"]'},
             format="json",
         )
         self.assertEqual(add_manager.status_code, 200)
@@ -311,7 +311,7 @@ class ChannelPermissionTest(TestCase):
 
         delete_manager = self.client.patch(
             f"/api/v1/channels/{self.public_channel.id}/",
-            {"managers_id": [self.user.username]},
+            {"managers_id": f'["{self.user.username}"]'},
             format="json",
         )
         self.assertEqual(self.public_channel.subscribers.count(), 2)
