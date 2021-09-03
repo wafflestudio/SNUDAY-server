@@ -8,6 +8,7 @@ from apps.channel.permission import ManagerCanModify
 from apps.channel.serializers import ChannelSerializer
 from apps.user.models import User
 from apps.user.serializers import UserSerializer
+import re
 
 
 class ChannelViewSet(viewsets.ModelViewSet):
@@ -40,7 +41,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        data["managers_id"].append(user.username)
+        p = re.compile('"([^",]*)"')
+        managers_list = p.findall(data["managers_id"])
+        managers_list.append(user.username)
+        data["managers_id"] = managers_list
 
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
@@ -99,20 +103,25 @@ class ChannelViewSet(viewsets.ModelViewSet):
         if "image" in data:
             image = Image.objects.create(image=data["image"], channel=channel)
 
-        serializer = self.get_serializer(channel, data=data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
         if "managers_id" in data:
+            p = re.compile('"([^",]*)"')
+            managers_list = p.findall(data["managers_id"])
             current_managers = list(channel.managers.all())
+
             for manager in current_managers:
-                if not manager.username in data["managers_id"]:
+                if not manager.username in managers_list:
                     channel.managers.remove(manager)
 
-            for manager_name in data["managers_id"]:
+            for manager_name in managers_list:
                 manager = User.objects.get(username=manager_name)
                 channel.subscribers.add(manager)
                 channel.managers.add(manager)
+
+            data["managers_id"] = managers_list
+
+        serializer = self.get_serializer(channel, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         return Response(serializer.data)
 
