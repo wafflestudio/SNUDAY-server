@@ -7,7 +7,7 @@ from apps.user.serializers import UserSerializer
 
 
 class ChannelSerializer(serializers.ModelSerializer):
-    subscribers_count = serializers.IntegerField(read_only=True)
+    subscribers_count = serializers.SerializerMethodField(read_only=True)
     # managers_id = serializers.ListField(
     #     child=serializers.CharField(), write_only=True, required=False
     # )
@@ -44,6 +44,10 @@ class ChannelSerializer(serializers.ModelSerializer):
             path = None
         return path
 
+    def get_subscribers_count(self, channel):
+        subscribers_count = channel.subscribers.count()
+        return subscribers_count
+
     def validate(self, data):
         if "managers_id" in data:
             usernames = data.pop("managers_id", [])
@@ -57,14 +61,14 @@ class ChannelSerializer(serializers.ModelSerializer):
 
 
 class ChannelAwaiterSerializer(serializers.ModelSerializer):
-    subscribers_count = serializers.IntegerField(read_only=True)
+    subscribers_count = serializers.SerializerMethodField(read_only=True)
     # managers_id = serializers.ListField(
     #     child=serializers.CharField(), write_only=True, required=False
     # )
     managers_id = serializers.CharField(write_only=True, required=True)
     managers = serializers.SerializerMethodField()
     image = serializers.ImageField(required=False)
-    awaiters_count = serializers.SerializerMethodField()
+    awaiters_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Channel
@@ -90,6 +94,10 @@ class ChannelAwaiterSerializer(serializers.ModelSerializer):
     def get_awaiters_count(self, channel):
         awaiters_count = channel.awaiters.count()
         return awaiters_count
+
+    def get_subscribers_count(self, channel):
+        subscribers_count = channel.subscribers.count()
+        return subscribers_count
 
     def validate(self, data):
         if "managers_id" in data:
