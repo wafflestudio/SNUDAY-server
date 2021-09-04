@@ -8,9 +8,10 @@ from apps.user.serializers import UserSerializer
 
 class ChannelSerializer(serializers.ModelSerializer):
     subscribers_count = serializers.IntegerField(read_only=True)
-    managers_id = serializers.ListField(
-        child=serializers.CharField(), write_only=True, required=False
-    )
+    # managers_id = serializers.ListField(
+    #     child=serializers.CharField(), write_only=True, required=False
+    # )
+    managers_id = serializers.CharField(write_only=True, required=False)
     managers = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField(required=False)
 
@@ -32,7 +33,9 @@ class ChannelSerializer(serializers.ModelSerializer):
         )
 
     def get_managers(self, channel):
-        return UserSerializer(channel.managers, many=True, context=self.context).data
+        return UserSerializer(
+            channel.managers.all(), many=True, context=self.context
+        ).data
 
     def get_image(self, channel):
         if Image.objects.filter(channel=channel).exists():
@@ -55,9 +58,10 @@ class ChannelSerializer(serializers.ModelSerializer):
 
 class ChannelAwaiterSerializer(serializers.ModelSerializer):
     subscribers_count = serializers.IntegerField(read_only=True)
-    managers_id = serializers.ListField(
-        child=serializers.CharField(), write_only=True, required=False
-    )
+    # managers_id = serializers.ListField(
+    #     child=serializers.CharField(), write_only=True, required=False
+    # )
+    managers_id = serializers.CharField(write_only=True, required=True)
     managers = serializers.SerializerMethodField()
     image = serializers.ImageField(required=False)
     awaiters_count = serializers.SerializerMethodField()
