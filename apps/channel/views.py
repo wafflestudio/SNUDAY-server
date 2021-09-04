@@ -41,14 +41,13 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        p = re.compile('"([^",]*)"')
-        managers_list = p.findall(data["managers_id"])
-        managers_list.append(user.username)
-        data["managers_id"] = managers_list
-
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        p = re.compile('"([^",]*)"')
+        managers_list = p.findall(data["managers_id"])
+        managers_list.append(user.username)
 
         channel = Channel.objects.get(id=serializer.data["id"])
 
@@ -57,14 +56,17 @@ class ChannelViewSet(viewsets.ModelViewSet):
             image.channel = channel
             image.save()
 
-        for manager in data["managers_id"]:
-            manager_obj = User.objects.get(username=manager)
-            channel.subscribers.add(manager_obj)
-            channel.managers.add(manager_obj)
-
         serializer = self.get_serializer(channel, data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        for manager in managers_list:
+            manager_obj = User.objects.get(username=manager)
+            channel.managers.add(manager_obj)
+            channel.subscribers.add(manager_obj)
+
+        serializer = self.get_serializer(channel, data=data)
+        serializer.is_valid(raise_exception=True)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -103,6 +105,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
         if "image" in data:
             image = Image.objects.create(image=data["image"], channel=channel)
 
+        serializer = self.get_serializer(channel, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
         if "managers_id" in data:
             p = re.compile('"([^",]*)"')
             managers_list = p.findall(data["managers_id"])
@@ -117,11 +123,8 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 channel.subscribers.add(manager)
                 channel.managers.add(manager)
 
-            data["managers_id"] = managers_list
-
         serializer = self.get_serializer(channel, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
 
         return Response(serializer.data)
 

@@ -296,7 +296,7 @@ class ChannelPermissionTest(TestCase):
             {"managers_id": "[]"},
             format="json",
         )
-        self.assertEqual(update.status_code, 400)
+        self.assertEqual(update.status_code, 200)
 
     def test_manager_delete_success(self):
         self.client.force_authenticate(user=self.user)
