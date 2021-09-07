@@ -67,7 +67,7 @@ class ChannelAwaiterSerializer(serializers.ModelSerializer):
     # )
     managers_id = serializers.CharField(write_only=True, required=True)
     managers = serializers.SerializerMethodField()
-    image = serializers.ImageField(required=False)
+    image = serializers.SerializerMethodField(required=False)
     awaiters_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -94,6 +94,13 @@ class ChannelAwaiterSerializer(serializers.ModelSerializer):
     def get_awaiters_count(self, channel):
         awaiters_count = channel.awaiters.count()
         return awaiters_count
+
+    def get_image(self, channel):
+        if Image.objects.filter(channel=channel).exists():
+            path = Image.objects.filter(id=channel.image_id).first().image.url
+        else:
+            path = None
+        return path
 
     def get_subscribers_count(self, channel):
         subscribers_count = channel.subscribers.count()
