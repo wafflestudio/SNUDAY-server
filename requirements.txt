@@ -12,6 +12,7 @@ coreschema==0.0.4
 coverage==5.3.1
 distlib==0.3.1
 Django==3.1.6
+django-cors-headers==3.7.0
 django-debug-toolbar==3.2
 django-dotenv==1.4.2
 django-storages==1.11.1
@@ -32,7 +33,7 @@ mysqlclient==2.0.3
 nodeenv==1.5.0
 packaging==20.9
 pathspec==0.8.1
-Pillow==8.1.0
+Pillow==9.0.0
 pre-commit==2.10.1
 PyJWT==2.0.1
 pyparsing==2.4.7
@@ -52,4 +53,3 @@ typing-extensions==3.7.4.3
 uritemplate==3.0.1
 urllib3==1.26.3
 virtualenv==20.4.2
-django-cors-headers==3.7.0
