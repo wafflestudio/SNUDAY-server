@@ -1,0 +1,22 @@
+name : test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ssh-test:
+    - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        env:
+          DOCKER_TOKEN: ${{ secrets.TOKEN }}
+          DOCKER_USERNAME: ${{ secrets.USER }}
+        with:
+          envs: DOCKER_TOKEN,DOCKER_USERNAME
+          host: ${{ secrets.HOST }}
+          key: ${{ secrets.KEY }}
+          username: ec2-user
+          script: |
+           whoami
+
