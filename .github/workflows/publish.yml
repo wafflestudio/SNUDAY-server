@@ -117,11 +117,11 @@ jobs:
           envs: DOCKER_TOKEN,DOCKER_USERNAME
           host: ${{ secrets.HOST }}
           key: ${{ secrets.KEY }}
-          username: ubuntu
+          username: ec2-user
           script: |
-            cd /home/ubuntu/snuday/
-            docker pull docker.pkg.github.com/wafflestudio/snuday-server/server-image:main
-            docker-compose up -d
+            docker pull ghcr.io/wafflestudio/snuday-server/server-image:main
+            docker stop $(docker ps -a -q)
+            docker container run -d -p 8000:8000 ghcr.io/wafflestudio/snuday-server/server-image:main python manage.py runserver 0.0.0.0:8000
 
       - name: send slack noti
         run: |
