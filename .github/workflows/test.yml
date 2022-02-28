@@ -7,13 +7,12 @@ on:
 
 jobs:
   ssh-test:
+    runs-on: ubuntu-20.04
+
+    services:
     - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
-        env:
-          DOCKER_TOKEN: ${{ secrets.TOKEN }}
-          DOCKER_USERNAME: ${{ secrets.USER }}
         with:
-          envs: DOCKER_TOKEN,DOCKER_USERNAME
           host: ${{ secrets.HOST }}
           key: ${{ secrets.KEY }}
           username: ec2-user
