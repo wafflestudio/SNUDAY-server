@@ -93,6 +93,7 @@ DATABASES = {
         "NAME": os.environ.get("DB_NAME"),
         "USER": os.environ.get("DB_USERNAME"),
         "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "OPTIONS": {"charset": "utf8mb4"},
     },
 }
 
