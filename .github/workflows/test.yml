@@ -9,13 +9,13 @@ jobs:
   ssh-test:
     runs-on: ubuntu-20.04
 
-    services:
+    steps:
     - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          key: ${{ secrets.KEY }}
-          username: ec2-user
-          script: |
-           whoami
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        key: ${{ secrets.KEY }}
+        username: ec2-user
+        script: |
+          whoami
 
