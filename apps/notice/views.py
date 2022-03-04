@@ -52,6 +52,7 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
         if (
             channel.is_private
             and not channel.managers.filter(id=request.user.id).exists()
+            and not channel.subscribers.filter(id=request.user.id).exists()
         ):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
@@ -78,7 +79,11 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
                 {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if channel.is_private and not (channel.managers.filter(id=request.user.id)):
+        if (
+            channel.is_private
+            and not channel.managers.filter(id=request.user.id).exists()
+            and not channel.subscribers.filter(id=request.user.id).exists()
+        ):
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
             )
