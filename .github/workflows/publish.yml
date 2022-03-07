@@ -108,6 +108,23 @@ jobs:
           repository: wafflestudio/snuday-server/server-image
           tag_with_ref: true
 
+      - name: Get Github action IP
+        id: ip
+        uses: haythem/public-ip@v1.2
+
+      - name: Setting environment variables..
+        run: |
+          echo "AWS_DEFAULT_REGION=ap-northeast-2" >> $GITHUB_ENV
+          echo "AWS_SG_ID=sg-05c27013c64cb142c" >> $GITHUB_ENV
+
+      - name: Add Github Actions IP to Security group
+        run: |
+          aws ec2 authorize-security-group-ingress --group-id ${{ env.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
         env:
@@ -122,6 +139,15 @@ jobs:
             docker pull ghcr.io/wafflestudio/snuday-server/server-image:main
             docker stop $(docker ps -a -q)
             docker container run -d -p 8000:8000 ghcr.io/wafflestudio/snuday-server/server-image:main python manage.py runserver 0.0.0.0:8000
+
+      - name: Remove Github Actions IP from security group
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id ${{ env.AWS_SG_ID }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+        if: always()
 
       - name: send slack noti
         run: |
