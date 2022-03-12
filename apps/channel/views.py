@@ -74,7 +74,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 serializer.save()
 
                 if (
-                    serializer.data.get["is_private"]
+                    serializer.data["is_private"]
                     and serializer.data["subscribers_count"] == 0
                 ):
                     raise NoSubscriberInPrivateChannel
