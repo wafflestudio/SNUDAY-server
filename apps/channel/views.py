@@ -68,10 +68,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
                     manager_obj = User.objects.get(username=manager)
                     channel.managers.add(manager_obj)
                     channel.subscribers.add(manager_obj)
-
-                serializer = self.get_serializer(channel, data=data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
+                    channel.save()
 
                 if (
                     serializer.data["is_private"]
