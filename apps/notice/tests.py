@@ -497,7 +497,6 @@ class PrivateChannelNoticeTest(TestCase):
         response = self.client.get(f"/api/v1/channels/{self.channel_id}/notices/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        print(data)
 
     def test_watcher_notice(self):
         self.client.force_authenticate(user=self.watcher)

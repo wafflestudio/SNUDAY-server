@@ -1,7 +1,9 @@
 from django.db.models import Q
-from rest_framework import viewsets, status
+from django.db import transaction
+from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from apps.channel.exceptions import NoSubscriberInPrivateChannel
 
 from apps.channel.models import Channel, Image
 from apps.channel.permission import ManagerCanModify
@@ -41,32 +43,44 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            with transaction.atomic():
+                serializer = self.get_serializer(data=data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
 
-        p = re.compile('"([^",]*)"')
-        managers_list = p.findall(data["managers_id"])
-        managers_list.append(user.username)
+                p = re.compile('"([^",]*)"')
+                managers_list = p.findall(data["managers_id"])
+                managers_list.append(user.username)
 
-        channel = Channel.objects.get(id=serializer.data["id"])
+                channel = Channel.objects.get(id=serializer.data["id"])
 
-        if "image" in data:
-            image = Image.objects.create(image=data["image"])
-            image.channel = channel
-            image.save()
+                if "image" in data:
+                    image = Image.objects.create(image=data["image"])
+                    image.channel = channel
+                    image.save()
 
-        serializer = self.get_serializer(channel, data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+                serializer = self.get_serializer(channel, data=data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
 
-        for manager in managers_list:
-            manager_obj = User.objects.get(username=manager)
-            channel.managers.add(manager_obj)
-            channel.subscribers.add(manager_obj)
+                for manager in managers_list:
+                    manager_obj = User.objects.get(username=manager)
+                    channel.managers.add(manager_obj)
+                    channel.subscribers.add(manager_obj)
+                    channel.save()
 
-        serializer = self.get_serializer(channel, data=data)
-        serializer.is_valid(raise_exception=True)
+                if (
+                    serializer.data["is_private"]
+                    and serializer.data["subscribers_count"] == 0
+                ):
+                    raise NoSubscriberInPrivateChannel
+
+        except NoSubscriberInPrivateChannel:
+            return Response(
+                {"error": "비공개 채널에 구독자가 한 명도 없어, 비공개 채널에 접근할 수 없습니다."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
