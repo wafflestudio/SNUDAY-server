@@ -191,6 +191,13 @@ def send_email(request):
     """
     email_prefix = request.data.get("email_prefix")
 
+    try:
+        info = EmailInfo.objects.get(email_prefix=email_prefix)
+        if info.is_verified == True:
+            return Response("이미 인증된 회원입니다.", status=status.HTTP_400_BAD_REQUEST)
+    except EmailInfo.DoesNotExist:
+        pass
+
     EmailInfo.objects.filter(email_prefix=email_prefix).delete()
     info = EmailInfo.of(email_prefix)
 
