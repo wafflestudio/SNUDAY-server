@@ -34,6 +34,27 @@ class EmailTest(TestCase):
         self.assertEqual(send.status_code, 200)
         self.assertEqual(EmailInfo.objects.count(), 1)
 
+    def test_send_mail_no_info(self):
+        self.info.delete()
+
+        send = self.client.post(
+            "/api/v1/users/mail/send/", {"email_prefix": "heka1024"}
+        )
+
+        self.assertEqual(send.status_code, 200)
+        self.assertEqual(EmailInfo.objects.count(), 1)
+
+    def test_send_mail_verified(self):
+        self.assertEqual(EmailInfo.objects.count(), 1)
+        self.info.is_verified = True
+        self.info.save()
+
+        send = self.client.post(
+            "/api/v1/users/mail/send/", {"email_prefix": "heka1024"}
+        )
+        self.assertEqual(send.status_code, 400)
+        self.assertEqual(EmailInfo.objects.count(), 1)
+
     def test_verify_mail(self):
         self.assertEqual(EmailInfo.objects.count(), 1)
 

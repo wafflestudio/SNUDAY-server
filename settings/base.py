@@ -155,9 +155,9 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_USE_TLS = True
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
-EMAIL_HOST_USER = "wafflestudio19.5.team9@gmail.com"  # ex) bum752@gmail.com
+EMAIL_HOST_USER = "waffle.snuday@gmail.com"  # ex) bum752@gmail.com
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_PASSWORD")  # ex) P@ssw0rd
-SERVER_EMAIL = "wafflestudio19.5.team9"  # ex) bum752@gmail.com
+SERVER_EMAIL = "waffle.snuday"  # ex) bum752@gmail.com
 DEFAULT_FROM_MAIL = "snuday"  # ex) bum752
 # Date input format
 DATE_INPUT_FORMATS = ("%Y-%m-%d",)

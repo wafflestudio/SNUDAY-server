@@ -8,18 +8,23 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('channel', '0005_channel_is_personal'),
+        ("channel", "0005_channel_is_personal"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='channel',
-            name='awaiters',
-            field=models.ManyToManyField(blank=True, related_name='awaiting_channels', through='channel.AwaiterChannel', to=settings.AUTH_USER_MODEL),
+            model_name="channel",
+            name="awaiters",
+            field=models.ManyToManyField(
+                blank=True,
+                related_name="awaiting_channels",
+                through="channel.AwaiterChannel",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='image',
-            name='image',
-            field=models.ImageField(upload_to='snuday/profile_pic'),
+            model_name="image",
+            name="image",
+            field=models.ImageField(upload_to="snuday/profile_pic"),
         ),
     ]
