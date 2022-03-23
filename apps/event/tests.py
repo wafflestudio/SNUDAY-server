@@ -23,6 +23,7 @@ class EventTest(TestCase):
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
         )
         self.channel.managers.set([self.manager])
+        self.channel.subscribers.set([self.manager])
 
         self.channel_id = self.channel.id
 
@@ -262,6 +263,107 @@ class EventTest(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Event.objects.count(), 1)
+
+    # Test for the Bug (issue #63)
+    # 문제가 되는 기간: 1/25 ~ 3/8 밖?
+    def test_event_out_of_specific_date(self):
+
+        json_data = {
+            "title": "event title",
+            "memo": "event memo",
+            "start_date": "2022-01-01",
+            "due_date": "2022-01-02",
+            "has_time": True,
+            "start_time": "08:00",
+            "due_time": "07:30",
+        }
+
+        # 일정 기간이 문제 기간에 완전히 속하는 경우(1/25 이전)
+        response_create_1 = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            json.dumps(json_data),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response_create_1.status_code, 201)
+
+        # 일정 기간 일부만 문제 기간에 속하는 경우(1/25 이전)
+        json_data["due_date"] = "2022-03-02"
+        response_create_2 = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            json.dumps(json_data),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response_create_2.status_code, 201)
+
+        # 일정 기간이 문제 기간과 전혀 겹치지 않는 경우
+        json_data["start_date"] = "2022-03-01"
+        response_create_3 = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            json.dumps(json_data),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response_create_3.status_code, 201)
+
+        # 일정 기간 일부만 문제 기간에 속하는 경우(3/8 이후)
+        json_data["due_date"] = "2022-04-30"
+        response_create_4 = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            json.dumps(json_data),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response_create_4.status_code, 201)
+
+        # 일정 기간이 문제 기간에 완전히 속하는 경우(3/8 이후)
+        json_data["start_date"] = "2022-04-29"
+        response_create_5 = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            json.dumps(json_data),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response_create_5.status_code, 201)
+
+        # 1월의 일정 얻기
+        response = self.client.get("/api/v1/users/me/events/?month=2022-01")
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["start_date"], "2022-01-01")
+        self.assertEqual(data[0]["due_date"], "2022-01-02")
+        self.assertEqual(data[1]["start_date"], "2022-01-01")
+        self.assertEqual(data[1]["due_date"], "2022-03-02")
+
+        # 3월의 일정 얻기
+        response = self.client.get("/api/v1/users/me/events/?month=2022-03")
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(len(data), 3)
+        self.assertEqual(data[0]["start_date"], "2022-01-01")
+        self.assertEqual(data[0]["due_date"], "2022-03-02")
+        self.assertEqual(data[1]["start_date"], "2022-03-01")
+        self.assertEqual(data[1]["due_date"], "2022-03-02")
+        self.assertEqual(data[2]["start_date"], "2022-03-01")
+        self.assertEqual(data[2]["due_date"], "2022-04-30")
+
+        # 4월의 일정 얻기
+        response = self.client.get("/api/v1/users/me/events/?month=2022-04")
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["start_date"], "2022-03-01")
+        self.assertEqual(data[0]["due_date"], "2022-04-30")
+        self.assertEqual(data[1]["start_date"], "2022-04-29")
+        self.assertEqual(data[1]["due_date"], "2022-04-30")
 
     def test_no_event(self):
         event_count = Event.objects.count()
