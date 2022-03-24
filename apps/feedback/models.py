@@ -10,3 +10,4 @@ class Feedback(models.Model):
         db_column="user_id",
     )
     content = models.CharField(max_length=300)
+    created_at = models.DateTimeField(auto_now_add=True)
