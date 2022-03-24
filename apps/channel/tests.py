@@ -19,7 +19,7 @@ class ChannelTest(TestCase):
             "name": "wafflestudio",
             "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             "is_private": False,
-            "managers_id": f'["{self.user.username}"]',
+            "managers_id": self.user.username,
         }
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -28,14 +28,15 @@ class ChannelTest(TestCase):
         create = self.client.post("/api/v1/channels/", self.data, format="json")
         data = create.json()
         channel = Channel.objects.get(id=data["id"])
-        self.assertEqual(channel.managers.count(), 1)
+        self.assertEqual(channel.managers.username, self.user.username)
         self.assertEqual(create.status_code, 201)
 
     def test_create_without_manager_will_success(self):
         data = self.data.copy()
-        data.update(managers_id="[]")
+        data.update(managers_id=None)
 
         create = self.client.post("/api/v1/channels/", data, format="json")
+        print(create.json())
         self.assertEqual(create.status_code, 201)
 
     def test_create_without_managers_id_will_fail(self):
@@ -81,14 +82,14 @@ class ChannelPermissionTest(TestCase):
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
         )
-        self.public_channel.managers.set([self.user])
+        self.public_channel.managers.set(self.user)
 
         self.private_channel = Channel.objects.create(
             name="wafflestudio18-5",
             description="와플스튜디오 18.5기 활동 채널입니다.",
             is_private=True,
         )
-        self.private_channel.managers.set([self.user])
+        self.private_channel.managers.set(self.user)
         self.client = APIClient()
 
     def test_channel_list(self):
@@ -139,11 +140,11 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         content = "내가 할 수 있는 건"
-        new_managers = f'["{self.b.username}"]'
+        new_manager = self.b.username
 
         update = self.client.patch(
             f"/api/v1/channels/{self.public_channel.id}/",
-            {"description": content, "managers_id": new_managers},
+            {"description": content, "managers_id": new_manager},
             format="json",
         )
         self.assertEqual(update.status_code, 200)
@@ -293,30 +294,10 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.user)
         update = self.client.patch(
             f"/api/v1/channels/{self.public_channel.id}/",
-            {"managers_id": "[]"},
+            {"managers_id": None},
             format="json",
         )
         self.assertEqual(update.status_code, 200)
-
-    def test_manager_delete_success(self):
-        self.client.force_authenticate(user=self.user)
-        add_manager = self.client.patch(
-            f"/api/v1/channels/{self.public_channel.id}/",
-            {"managers_id": f'["{self.user.username}", "{self.b.username}"]'},
-            format="json",
-        )
-        self.assertEqual(add_manager.status_code, 200)
-        self.assertEqual(self.public_channel.subscribers.count(), 2)
-        self.assertEqual(self.public_channel.managers.count(), 2)
-
-        delete_manager = self.client.patch(
-            f"/api/v1/channels/{self.public_channel.id}/",
-            {"managers_id": f'["{self.user.username}"]'},
-            format="json",
-        )
-        self.assertEqual(self.public_channel.subscribers.count(), 2)
-        self.assertEqual(self.public_channel.managers.count(), 1)
-        self.assertEqual(delete_manager.status_code, 200)
 
     def test_channel_recommend(self):
         recommend = self.client.get(f"/api/v1/channels/recommend/")
