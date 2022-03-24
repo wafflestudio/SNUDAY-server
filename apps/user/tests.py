@@ -1,7 +1,7 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.channel.models import Channel, UserChannel
+from apps.channel.models import Channel, UserChannel, ManagerChannel
 from apps.user.models import User, EmailInfo
 
 
@@ -161,6 +161,18 @@ class UserCreateDeleteTest(TestCase):
         )
         UserChannel.objects.create(user=self.user, channel=channel)
 
+        channel_personal = Channel.objects.create(
+            name="wafflestudio",
+            description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            is_personal=True,
+        )
+
+        # 개인 채널도 생성한뒤 안보이는거 확인
+        UserChannel.objects.create(
+            user=self.user,
+            channel=channel_personal,
+        )
+
         subscribing = self.client.get("/api/v1/users/me/subscribing_channels/")
         data = subscribing.json()
 
@@ -175,6 +187,17 @@ class UserCreateDeleteTest(TestCase):
 
         create = self.client.post("/api/v1/channels/", self.channel_data, format="json")
 
+        channel_personal = Channel.objects.create(
+            name="wafflestudio",
+            description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            is_personal=True,
+        )
+
+        # 개인 채널도 생성한뒤 안보이는거 확인
+        ManagerChannel.objects.create(
+            user=self.user,
+            channel=channel_personal,
+        )
         managing = self.client.get("/api/v1/users/me/managing_channels/")
         data = managing.json()
 
