@@ -8,6 +8,7 @@ class Feedback(models.Model):
         related_name="feedback",
         on_delete=models.SET_NULL,
         db_column="user_id",
+        null=True,
     )
     content = models.CharField(max_length=300)
     created_at = models.DateTimeField(auto_now_add=True)
