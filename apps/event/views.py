@@ -91,6 +91,12 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, channel_pk):
+        """
+        # 특정 채널의 이벤트를 반환하는 API
+        * query parameter가 주어지지 않으면 이번 달의 일정을 반환합니다.
+        * query parameter로 date = yyyy-mm-dd 형식으로 주어지면 그 날이 포함된 일정을 반환합니다.(하루짜리 일정은 반환하지 않습니다.)
+        * query parameter로 month = yyyy-mm 형식으로 주어지면 그 달이 포함된 일정을 반환합니다.
+        """
         channel = get_object_or_400(Channel, id=channel_pk)
 
         date = self.request.GET.get("date", "")
@@ -276,6 +282,12 @@ class UserEventViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request, user_pk):
+        """
+        # 특정 사람이 구독하고 있는 채널들의 이벤트를 반환하는 API
+        * query parameter가 주어지지 않으면 이번 달의 일정을 반환합니다.
+        * query parameter로 date = yyyy-mm-dd 형식으로 주어지면 그 날이 포함된 일정을 반환합니다.(하루짜리 일정은 반환하지 않습니다.)
+        * query parameter로 month = yyyy-mm 형식으로 주어지면 그 달이 포함된 일정을 반환합니다.
+        """
         if user_pk != "me":
             return Response(
                 {"error": "Cannot read others' events"},
