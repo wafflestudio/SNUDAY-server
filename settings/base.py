@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "apps.channel",
     "apps.notice",
     "apps.event",
+    "apps.feedback",
     "corsheaders",
 ]
 
