@@ -19,8 +19,3 @@ class FeedbackView(CreateAPIView):
         """
         request.data["user"] = request.user.id
         return super().create(request)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["request"] = self.request
-        return context
