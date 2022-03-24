@@ -10,6 +10,7 @@ from apps.feedback.models import Feedback
 class FeedbackView(CreateAPIView):
     serializer_class = FeedbackSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    queryset = Feedback.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

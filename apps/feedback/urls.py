@@ -1,6 +1,6 @@
-from rest_framework import routers
 from apps.feedback.views import FeedbackView
+from django.urls import path, include
 
-router = routers.SimpleRouter()
-router.register(r"feedback", FeedbackView)
-urlpatterns = router.urls
+urlpatterns = [
+    path("feedback/", FeedbackView.as_view(), name="feedback"),  # /api/v1/feedback/
+]
