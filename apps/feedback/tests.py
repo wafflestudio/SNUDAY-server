@@ -41,6 +41,7 @@ class FeedbackTest(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Feedback.objects.count(), 0)
         content = "a" * 301
         response = self.client.post(
             "/api/v1/feedback/",
@@ -48,6 +49,7 @@ class FeedbackTest(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Feedback.objects.count(), 0)
 
     def test_feedback_unauthorized(self):
         content = "best app in the world."
@@ -57,3 +59,4 @@ class FeedbackTest(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(Feedback.objects.count(), 0)
