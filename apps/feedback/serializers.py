@@ -8,7 +8,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Feedback
-        exclude = ["created_at"]
+        read_only = ["created_at"]
 
     def get_user(self):
         return self.context.request.user
