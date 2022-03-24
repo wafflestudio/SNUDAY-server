@@ -11,4 +11,4 @@ class FeedbackSerializer(serializers.ModelSerializer):
         exclude = ["created_at"]
 
     def get_user(self):
-        return self.context.user
+        return self.context.request.user
