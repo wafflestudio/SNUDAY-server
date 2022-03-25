@@ -21,8 +21,8 @@ class EventTest(TestCase):
         self.channel = Channel.objects.create(
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            managers=self.manager,
         )
-        self.channel.managers.set([self.manager])
         self.channel.subscribers.set([self.manager])
 
         self.channel_id = self.channel.id
@@ -465,9 +465,8 @@ class PublicChannelEventTest(TestCase):
         self.channel = Channel.objects.create(
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            managers=self.manager,
         )
-        self.channel.managers.set([self.manager])
-
         self.channel_id = self.channel.id
 
         self.data = {
@@ -857,8 +856,8 @@ class PrivateChannelEventTest(TestCase):
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             is_private=True,
+            managers=self.manager,
         )
-        self.channel.managers.set([self.manager])
 
         self.channel_id = self.channel.id
 
@@ -1079,19 +1078,18 @@ class ParticularDateEventTest(TestCase):
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             is_private=False,
+            managers=self.manager,
         )
 
         self.channel_2 = Channel.objects.create(
             name="서울대학교 ETL",
             description="서버가 종종 터져요",
             is_private=False,
+            managers=self.manager,
         )
 
         self.channel_id = self.channel.id
         self.channel_2_id = self.channel_2.id
-
-        self.channel.managers.set([self.manager])
-        self.channel_2.managers.set([self.manager])
 
         self.client = APIClient()
 

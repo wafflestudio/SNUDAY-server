@@ -34,7 +34,7 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
                 {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if not channel.managers.filter(id=request.user.id).exists():
+        if not channel.managers.id == request.user.id:
             return Response(
                 {"error": "Only managers can write a notice."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -51,7 +51,7 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
 
         if (
             channel.is_private
-            and not channel.managers.filter(id=request.user.id).exists()
+            and not channel.managers.id == request.user.id
             and not channel.subscribers.filter(id=request.user.id).exists()
         ):
             return Response(
@@ -81,7 +81,7 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
 
         if (
             channel.is_private
-            and not channel.managers.filter(id=request.user.id).exists()
+            and not channel.managers.id == request.user.id
             and not channel.subscribers.filter(id=request.user.id).exists()
         ):
             return Response(
@@ -197,7 +197,7 @@ class NoticeRecentViewSet(viewsets.GenericViewSet):
     def recent_notices(self, request, pk=None):
         channel = get_object_or_400(Channel, id=pk)
 
-        if channel.is_private and not (channel.managers.filter(id=request.user.id)):
+        if channel.is_private and not channel.managers.id == request.user.id:
             return Response(
                 {"error": "This channel is private."}, status=status.HTTP_403_FORBIDDEN
             )
