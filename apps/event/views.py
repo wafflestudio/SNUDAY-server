@@ -115,7 +115,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         # 특정 날짜
         if date:
             start_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
-            due_date = start_date + timedelta(days=1)
+            due_date = start_date
             qs = qs.filter(start_date__lt=due_date, due_date__gt=start_date)
 
         # 특정 달
