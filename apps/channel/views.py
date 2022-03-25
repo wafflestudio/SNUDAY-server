@@ -61,9 +61,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 serializer.save()
 
                 manager_obj = User.objects.get(
-                    username=data["managers_id"]
-                    if data["managers_id"]
-                    else user.username
+                    id=data["managers_id"] if data["managers_id"] else user.id
                 )
                 channel.managers = manager_obj
                 channel.subscribers.add(manager_obj)
@@ -106,7 +104,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
         """
         channel = self.get_object()
         data = request.data.copy()
-
         if "name" in data and channel.name != data["name"]:
             q_channel = Channel.objects.filter(name=data["name"]).first()
 
@@ -121,12 +118,10 @@ class ChannelViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(channel, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
         if "managers_id" in data and data["managers_id"]:
-
             current_manager = channel.managers
-            if current_manager.username != data["managers_id"]:
-                manager = User.objects.get(username=data["managers_id"])
+            if current_manager.id != data["managers_id"]:
+                manager = User.objects.get(id=data["managers_id"])
                 channel.managers = manager
                 channel.subscribers.add(manager)
 

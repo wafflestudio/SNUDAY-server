@@ -13,5 +13,5 @@ class ManagerCanModify(BasePermission):
             "allow",
             "disallow",
         ):
-            return obj.managers.filter(id=request.user.id).exists()
+            return obj.managers.id == request.user.id
         return True

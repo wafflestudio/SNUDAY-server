@@ -35,9 +35,7 @@ class ChannelSerializer(serializers.ModelSerializer):
         )
 
     def get_managers(self, channel):
-        return UserSerializer(
-            channel.managers.all(), many=True, context=self.context
-        ).data
+        return UserSerializer(channel.managers, context=self.context).data
 
     def get_image(self, channel):
         if Image.objects.filter(channel=channel).exists():
@@ -53,7 +51,7 @@ class ChannelSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if "managers_id" in data and data["managers_id"]:
 
-            q = User.objects.filter(username=data["managers_id"])
+            q = User.objects.filter(id=data["managers_id"])
 
             if q.count() == 0:
                 data["managers"] = None

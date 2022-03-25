@@ -19,7 +19,7 @@ class ChannelTest(TestCase):
             "name": "wafflestudio",
             "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             "is_private": False,
-            "managers_id": self.user.username,
+            "managers_id": self.user.id,
         }
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -36,7 +36,6 @@ class ChannelTest(TestCase):
         data.update(managers_id=None)
 
         create = self.client.post("/api/v1/channels/", data, format="json")
-        print(create.json())
         self.assertEqual(create.status_code, 201)
 
     def test_create_without_managers_id_will_fail(self):
@@ -81,15 +80,15 @@ class ChannelPermissionTest(TestCase):
         self.public_channel = Channel.objects.create(
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            managers=self.user,
         )
-        self.public_channel.managers.set(self.user)
 
         self.private_channel = Channel.objects.create(
             name="wafflestudio18-5",
             description="와플스튜디오 18.5기 활동 채널입니다.",
             is_private=True,
+            managers=self.user,
         )
-        self.private_channel.managers.set(self.user)
         self.client = APIClient()
 
     def test_channel_list(self):
@@ -140,11 +139,10 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         content = "내가 할 수 있는 건"
-        new_manager = self.b.username
 
         update = self.client.patch(
             f"/api/v1/channels/{self.public_channel.id}/",
-            {"description": content, "managers_id": new_manager},
+            {"description": content, "managers_id": self.b.id},
             format="json",
         )
         self.assertEqual(update.status_code, 200)
@@ -223,7 +221,7 @@ class ChannelPermissionTest(TestCase):
         unsubscribe = self.client.delete(
             f"/api/v1/channels/{self.private_channel.id}/subscribe/"
         )
-        self.assertEqual(subscribe.status_code, 204)
+        self.assertEqual(unsubscribe.status_code, 204)
         self.assertEqual(self.private_channel.awaiters.count(), 0)
         self.assertEqual(self.private_channel.subscribers.count(), 0)
 
@@ -327,7 +325,7 @@ class ChannelSearchTest(TestCase):
         self.channel3 = Channel.objects.create(
             name="서울대학교 총학생회", description="안녕하세요, 서울대학교 총학생회입니다."
         )
-        self.channel3.managers.set([self.user])
+        self.channel3.managers = self.user
 
     def test_all_search(self):
         type = "all"
