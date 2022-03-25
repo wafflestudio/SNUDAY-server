@@ -305,7 +305,7 @@ class UserEventViewSet(viewsets.GenericViewSet):
 
         if date:
             start_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
-            due_date = start_date + timedelta(days=1)
+            due_date = start_date
             qs = qs.filter(start_date__lt=due_date, due_date__gt=start_date)
         elif month:
             strip_month_begin = datetime.strptime(month, "%Y-%m")
