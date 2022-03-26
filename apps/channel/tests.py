@@ -43,10 +43,23 @@ class ChannelTest(TestCase):
             "name": "wafflestudio",
             "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             "is_private": False,
+            "managers_id": self.user.id + 100,
         }
 
         create = self.client.post(
             "/api/v1/channels/", data_without_managers_id, format="json"
+        )
+        self.assertEqual(create.status_code, 400)
+
+    def test_create_with_wrong_managers_id_will_fail(self):
+        data_with_wrong_managers_id = {
+            "name": "wafflestudio",
+            "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            "is_private": False,
+        }
+
+        create = self.client.post(
+            "/api/v1/channels/", data_with_wrong_managers_id, format="json"
         )
         self.assertEqual(create.status_code, 400)
 

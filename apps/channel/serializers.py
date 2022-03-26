@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from rest_framework import serializers
 from apps.channel.models import Channel, Image
 
@@ -54,7 +55,7 @@ class ChannelSerializer(serializers.ModelSerializer):
             q = User.objects.filter(id=data["managers_id"])
 
             if q.count() == 0:
-                data["managers"] = None
+                raise serializers.ValidationError("존재하지 않는 사용자를 관리자로 지정하였습니다.")
 
         return data
 
