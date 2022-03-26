@@ -11,6 +11,7 @@ from apps.notice.permission import IsOwnerOrReadOnly
 from datetime import datetime, timedelta
 from django.utils import timezone
 from dateutil.relativedelta import relativedelta
+from django.db.models import Q
 
 
 class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
@@ -114,9 +115,8 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
 
         # 특정 날짜
         if date:
-            start_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
-            due_date = start_date + timedelta(days=1)
-            qs = qs.filter(start_date__lt=due_date, due_date__gt=start_date)
+            target_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
+            qs = qs.filter(start_date__lte=target_date, due_date__gte=target_date)
 
         # 특정 달
         elif month:
@@ -302,11 +302,9 @@ class UserEventViewSet(viewsets.GenericViewSet):
         )
 
         qs = Event.objects.filter(channel__in=list(channel_list))
-
         if date:
-            start_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
-            due_date = start_date + timedelta(days=1)
-            qs = qs.filter(start_date__lt=due_date, due_date__gt=start_date)
+            target_date = timezone.make_aware(datetime.strptime(date, "%Y-%m-%d"))
+            qs = qs.filter(start_date__lte=target_date, due_date__gte=target_date)
         elif month:
             strip_month_begin = datetime.strptime(month, "%Y-%m")
             month_begin = timezone.make_aware(strip_month_begin) - timedelta(days=7)
@@ -332,5 +330,4 @@ class UserEventViewSet(viewsets.GenericViewSet):
             )
 
         serializer = self.get_serializer(qs, many=True)
-
         return Response(serializer.data, status=status.HTTP_200_OK)
