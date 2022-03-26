@@ -1,7 +1,7 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.channel.models import Channel, UserChannel, ManagerChannel
+from apps.channel.models import Channel, UserChannel
 from apps.user.models import User, EmailInfo
 
 
@@ -191,13 +191,9 @@ class UserCreateDeleteTest(TestCase):
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             is_personal=True,
+            managers=self.user,
         )
 
-        # 개인 채널도 생성한뒤 안보이는거 확인
-        ManagerChannel.objects.create(
-            user=self.user,
-            channel=channel_personal,
-        )
         managing = self.client.get("/api/v1/users/me/managing_channels/")
         data = managing.json()
 

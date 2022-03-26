@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from apps.channel.models import Channel, ManagerChannel
+from apps.channel.models import Channel
 from apps.user.models import User
 from apps.user.utils import is_verified_email
 
@@ -52,8 +52,8 @@ class UserSerializer(serializers.ModelSerializer):
             description="개인 채널입니다.",
             is_private=True,
             is_personal=True,
+            managers=u,
         )
-        ManagerChannel.objects.create(user=u, channel=c)
         c.subscribers.add(u)
         return u
 

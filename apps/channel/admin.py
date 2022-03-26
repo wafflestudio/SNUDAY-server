@@ -4,14 +4,8 @@ from apps.channel.models import (
     Image,
     Channel,
     UserChannel,
-    ManagerChannel,
     AwaiterChannel,
 )
-
-
-class ManagerInline(admin.TabularInline):
-    model = ManagerChannel
-    extra = 2  # how many rows to show
 
 
 @admin.register(Image)
@@ -22,7 +16,6 @@ class ImageAdmin(admin.ModelAdmin):
 @admin.register(Channel)
 class ChannelAdmin(admin.ModelAdmin):
     model = Channel
-    inlines = [ManagerInline]
 
 
 @admin.register(UserChannel)
@@ -37,15 +30,6 @@ class UserChannelAdmin(admin.ModelAdmin):
 @admin.register(AwaiterChannel)
 class AwaiterChannelAdmin(admin.ModelAdmin):
     model = AwaiterChannel
-    list_display = (
-        "channel",
-        "user",
-    )
-
-
-@admin.register(ManagerChannel)
-class ManagerChannelAdmin(admin.ModelAdmin):
-    model = ManagerChannel
     list_display = (
         "channel",
         "user",
