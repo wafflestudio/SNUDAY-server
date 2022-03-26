@@ -20,11 +20,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
     def create(self, request):
         """
-        # 채널을 만드는 API
-        * `managers_id`는 매니저의 `username`들을 ["user1", "user2"]와 같이 list 형식으로 넣어야 함
-        * image는 얻게 된 이미지를 첨부할 것
-        * `is_private`은 비공개채널 여부에 대한 설정
-        * `is_personal`은 개인 채널인지 여부에 대한 설정
+                # 채널을 만드는 API
+                * `managers_id`는 매니저의 `username`을 하나의 string으로 넣어야 함
+                * image는 얻게 된 이미지        * `is_private`은 비공개채널 여부에 대한 를 첨부할 것
+        설정
+                * `is_personal`은 개인 채널인지 여부에 대한 설정
         """
         user = request.user
         data = request.data.copy()
@@ -37,9 +37,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
                     {"error": "동일한 이름의 채널이 존재합니다."}, status=status.HTTP_400_BAD_REQUEST
                 )
 
-        if not "managers_id" in data:
+        if "managers_id" not in data:
             return Response(
-                {"error": "managers_id에 manager들의 username 목록을 입력해야합니다."},
+                {"error": "managers_id에 manager의 username 목록을 입력해야합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -48,10 +48,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(data=data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-
-                p = re.compile('"([^",]*)"')
-                managers_list = p.findall(data["managers_id"])
-                managers_list.append(user.username)
 
                 channel = Channel.objects.get(id=serializer.data["id"])
 
@@ -64,11 +60,12 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
 
-                for manager in managers_list:
-                    manager_obj = User.objects.get(username=manager)
-                    channel.managers.add(manager_obj)
-                    channel.subscribers.add(manager_obj)
-                    channel.save()
+                manager_obj = User.objects.get(
+                    id=data["managers_id"] if data["managers_id"] else user.id
+                )
+                channel.managers = manager_obj
+                channel.subscribers.add(manager_obj)
+                channel.save()
 
                 if (
                     serializer.data["is_private"]
@@ -107,7 +104,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
         """
         channel = self.get_object()
         data = request.data.copy()
-
         if "name" in data and channel.name != data["name"]:
             q_channel = Channel.objects.filter(name=data["name"]).first()
 
@@ -122,20 +118,12 @@ class ChannelViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(channel, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
-        if "managers_id" in data:
-            p = re.compile('"([^",]*)"')
-            managers_list = p.findall(data["managers_id"])
-            current_managers = list(channel.managers.all())
-
-            for manager in current_managers:
-                if not manager.username in managers_list:
-                    channel.managers.remove(manager)
-
-            for manager_name in managers_list:
-                manager = User.objects.get(username=manager_name)
+        if "managers_id" in data and data["managers_id"]:
+            current_manager = channel.managers
+            if current_manager.id != data["managers_id"]:
+                manager = User.objects.get(id=data["managers_id"])
+                channel.managers = manager
                 channel.subscribers.add(manager)
-                channel.managers.add(manager)
 
         serializer = self.get_serializer(channel, data=data, partial=True)
         serializer.is_valid(raise_exception=True)

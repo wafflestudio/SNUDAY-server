@@ -47,7 +47,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
                 {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if not channel.managers.filter(id=request.user.id).exists():
+        if not channel.managers.id == request.user.id:
             return Response(
                 {"error": "Only managers can create an event."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -103,7 +103,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         month = self.request.query_params.get("month", "")
 
         if channel.is_private and not (
-            channel.managers.filter(id=request.user.id).exists()
+            channel.managers.id == request.user.id
             or channel.subscribers.filter(id=request.user.id).exists()
         ):
             return Response(
@@ -156,7 +156,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         channel = get_object_or_400(Channel, id=channel_pk)
 
         if channel.is_private and not (
-            channel.managers.filter(id=request.user.id).exists()
+            channel.managers.id == request.user.id
             or channel.subscribers.filter(id=request.user.id).exists()
         ):
             return Response(

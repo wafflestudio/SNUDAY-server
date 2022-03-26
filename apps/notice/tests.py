@@ -20,8 +20,8 @@ class NoticeTest(TestCase):
         self.channel = Channel.objects.create(
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            managers=self.manager,
         )
-        self.channel.managers.set([self.manager])
 
         self.channel_id = self.channel.id
 
@@ -158,8 +158,8 @@ class PublicChannelNoticeTest(TestCase):
         self.channel = Channel.objects.create(
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            managers=self.manager,
         )
-        self.channel.managers.set([self.manager])
 
         self.channel_id = self.channel.id
 
@@ -393,8 +393,8 @@ class PrivateChannelNoticeTest(TestCase):
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             is_private=True,
+            managers=self.manager,
         )
-        self.channel.managers.set([self.manager])
 
         self.channel_id = self.channel.id
 
@@ -589,8 +589,8 @@ class NoticeSearchTest(TestCase):
             name="서울대학교 총학생회",
             description="총학 파이팅!",
             is_private=False,
+            managers=self.manager,
         )
-        self.channel.managers.set([self.manager])
 
         self.channel_id = self.channel.id
         self.channel_2_id = self.channel_2.id
@@ -844,9 +844,8 @@ class NoticeGetTest(TestCase):
             name="wafflestudio",
             description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             is_private=True,
+            managers=self.manager,
         )
-
-        self.channel.managers.set([self.manager])
 
         self.channel_id = self.channel.id
         self.client = APIClient()

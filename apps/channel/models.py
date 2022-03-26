@@ -55,12 +55,20 @@ class Channel(TimeStampModel):
         blank=True,
     )
 
-    managers = models.ManyToManyField(
+    # staffs = models.ManyToManyField(
+    #    User,
+    #    through="ManagerChannel",
+    #    through_fields=("channel", "user"),
+    #    related_name="managing_channels",
+    #    blank=False,
+    # )
+
+    managers = models.ForeignKey(
         User,
-        through="ManagerChannel",
-        through_fields=("channel", "user"),
+        on_delete=models.CASCADE,
         related_name="managing_channels",
         blank=False,
+        null=True,
     )
 
     objects = ChannelManager()
