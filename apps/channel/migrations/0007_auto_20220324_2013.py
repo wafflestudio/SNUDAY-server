@@ -9,17 +9,22 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('channel', '0006_auto_20220313_0202'),
+        ("channel", "0006_auto_20220313_0202"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='channel',
-            name='managers',
+            model_name="channel",
+            name="managers",
         ),
         migrations.AddField(
-            model_name='channel',
-            name='managers',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='managing_channels', to=settings.AUTH_USER_MODEL),
+            model_name="channel",
+            name="managers",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="managing_channels",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
     ]

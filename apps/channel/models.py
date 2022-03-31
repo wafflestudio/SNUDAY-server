@@ -96,16 +96,3 @@ class AwaiterChannel(models.Model):
                 fields=("channel", "user"), name="subscription_waiting_should_be_unique"
             )
         ]
-
-
-class ManagerChannel(models.Model):
-    channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    class Meta:
-        constraints = [
-            UniqueConstraint(
-                fields=("channel", "user"),
-                name="manager_relation_should_be_unique_together",
-            )
-        ]
