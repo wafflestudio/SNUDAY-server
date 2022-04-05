@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from django.db.models import Q
 from django.db import transaction
 from rest_framework import viewsets, status, serializers
@@ -39,7 +40,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         if "managers_id" not in data:
             return Response(
-                {"error": "managers_id에 manager의 username 목록을 입력해야합니다."},
+                {"error": "managers_id에 manager의 username을 입력해야합니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -61,7 +62,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 serializer.save()
 
                 manager_obj = User.objects.get(
-                    id=data["managers_id"] if data["managers_id"] else user.id
+                    username=data["managers_id"]
+                    if data["managers_id"]
+                    else user.username
                 )
                 channel.managers = manager_obj
                 channel.subscribers.add(manager_obj)
@@ -118,10 +121,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(channel, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
         if "managers_id" in data and data["managers_id"]:
             current_manager = channel.managers
             if current_manager.id != data["managers_id"]:
-                manager = User.objects.get(id=data["managers_id"])
+                manager = User.objects.get(username=data["managers_id"])
                 channel.managers = manager
                 channel.subscribers.add(manager)
 
