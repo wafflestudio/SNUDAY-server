@@ -155,7 +155,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        if channel.manager != request.user:
+        if channel.managers != request.user:
             return Response(
                 {"error": "해당 채널의 매니저만 채널을 삭제할 수 있습니다."},
                 status=status.HTTP_403_FORBIDDEN,
