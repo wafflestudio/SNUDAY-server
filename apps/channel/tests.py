@@ -137,6 +137,7 @@ class ChannelPermissionTest(TestCase):
         self.assertEqual(delete.status_code, 200)
 
         self.assertEqual(Channel.objects.count(), 1)
+        self.assertEqual(self.user.managing_channels.count(), 1)
 
     def test_delete_with_nonexistent_channel_will_fail(self):
         self.client.force_authenticate(user=self.user)
