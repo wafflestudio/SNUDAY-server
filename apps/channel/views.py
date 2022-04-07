@@ -134,6 +134,37 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
+    def destroy(self, request, pk=None):
+        """
+        # 채널 삭제 API
+        * {id}에는 channel의 id를 넣으면 됨
+        * 해당 채널의 매니저만 가능
+        * 존재하지 않는 채널이면 400
+        * 해당 채널의 매니저가 아니면 403
+        """
+        try:
+            channel_id = int(pk)
+            channel = Channel.objects.filter(id=channel_id).first()
+
+            if channel == None:
+                return Response(
+                    {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
+                )
+        except ValueError:
+            return Response(
+                {"error": "Wrong Channel ID."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if channel.managers != request.user:
+            return Response(
+                {"error": "해당 채널의 매니저만 채널을 삭제할 수 있습니다."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        self.check_object_permissions(self.request, channel)
+        channel.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def retrieve(self, request, pk=None):
         """
         # 채널 정보 GET API
@@ -269,7 +300,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         else:
             channel.awaiters.remove(user)
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=["get"])
     def recommend(self, request):
