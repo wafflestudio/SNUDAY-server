@@ -134,7 +134,7 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         delete = self.client.delete(f"/api/v1/channels/{self.public_channel.id}/")
-        self.assertEqual(delete.status_code, 200)
+        self.assertEqual(delete.status_code, 204)
 
         self.assertEqual(Channel.objects.count(), 1)
         self.assertEqual(self.user.managing_channels.count(), 1)
@@ -143,6 +143,9 @@ class ChannelPermissionTest(TestCase):
         self.client.force_authenticate(user=self.user)
 
         delete = self.client.delete(f"/api/v1/channels/-1/")
+        self.assertEqual(delete.status_code, 400)
+
+        delete = self.client.delete(f"/api/v1/channels/channel/")
         self.assertEqual(delete.status_code, 400)
 
     def test_update_without_permission_will_fail(self):
@@ -285,7 +288,7 @@ class ChannelPermissionTest(TestCase):
         disallow = self.client.delete(
             f"/api/v1/channels/{self.private_channel.id}/awaiters/allow/{self.b.id}/"
         )
-        self.assertEqual(disallow.status_code, 200)
+        self.assertEqual(disallow.status_code, 204)
         self.assertEqual(self.private_channel.awaiters.count(), 0)
         self.assertEqual(self.private_channel.subscribers.count(), 0)
 

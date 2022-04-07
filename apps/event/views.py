@@ -273,7 +273,7 @@ class EventViewSet(generics.RetrieveAPIView, viewsets.GenericViewSet):
         self.check_object_permissions(self.request, event)
         event.delete()
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserEventViewSet(viewsets.GenericViewSet):

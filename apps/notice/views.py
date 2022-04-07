@@ -151,7 +151,7 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
 
         self.check_object_permissions(self.request, notice)
         notice.delete()
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False, methods=["get"])
     def search(self, request, channel_pk):

@@ -660,7 +660,7 @@ class PublicChannelEventTest(TestCase):
             )
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
 
         self.assertIsNone(response.data)
 
@@ -961,7 +961,7 @@ class PrivateChannelEventTest(TestCase):
             )
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 204)
 
         self.assertIsNone(response.data)
 
