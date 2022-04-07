@@ -50,11 +50,13 @@ class ChannelSerializer(serializers.ModelSerializer):
         return subscribers_count
 
     def validate(self, data):
+
         if "managers_id" in data and data["managers_id"]:
+            try:
+                q = User.objects.get(username=data["managers_id"])
 
-            q = User.objects.filter(id=data["managers_id"])
-
-            if q.count() == 0:
+                data["managers_id"] = q.id
+            except User.DoesNotExist:
                 raise serializers.ValidationError("존재하지 않는 사용자를 관리자로 지정하였습니다.")
 
         return data

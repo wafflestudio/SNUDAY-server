@@ -19,7 +19,7 @@ class ChannelTest(TestCase):
             "name": "wafflestudio",
             "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             "is_private": False,
-            "managers_id": self.user.id,
+            "managers_id": self.user.username,
         }
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -27,7 +27,7 @@ class ChannelTest(TestCase):
     def test_create_channel(self):
         create = self.client.post("/api/v1/channels/", self.data, format="json")
         data = create.json()
-        channel = Channel.objects.get(id=data["id"])
+        channel = Channel.objects.get(managers=self.user)
         self.assertEqual(channel.managers.username, self.user.username)
         self.assertEqual(create.status_code, 201)
 
@@ -43,7 +43,6 @@ class ChannelTest(TestCase):
             "name": "wafflestudio",
             "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             "is_private": False,
-            "managers_id": self.user.id + 100,
         }
 
         create = self.client.post(
@@ -56,6 +55,7 @@ class ChannelTest(TestCase):
             "name": "wafflestudio",
             "description": "맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
             "is_private": False,
+            "managers_id": "esioprise",
         }
 
         create = self.client.post(
@@ -155,7 +155,7 @@ class ChannelPermissionTest(TestCase):
 
         update = self.client.patch(
             f"/api/v1/channels/{self.public_channel.id}/",
-            {"description": content, "managers_id": self.b.id},
+            {"description": content, "managers_id": self.b.username},
             format="json",
         )
         self.assertEqual(update.status_code, 200)
