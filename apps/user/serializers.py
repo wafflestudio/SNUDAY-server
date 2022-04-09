@@ -46,8 +46,8 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("비밀번호는 8글자 이상이어야 합니다.")
         return value
 
-    def get_private_channel_id(self) -> int:
-        channel = self.managing_channels.filter(is_private=True).first()
+    def get_private_channel_id(self, user) -> int:
+        channel = user.managing_channels.filter(is_private=True).first()
         return channel.id if channel else None
 
     @transaction.atomic
