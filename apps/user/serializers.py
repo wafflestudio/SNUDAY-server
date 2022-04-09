@@ -12,7 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField()
     last_name = serializers.CharField()
     username = serializers.CharField()
-    private_channel_id = serializers.IntegerField(read_only=True)
+    private_channel_id = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -46,7 +46,7 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("비밀번호는 8글자 이상이어야 합니다.")
         return value
 
-    def get_private_channel_id(self):
+    def get_private_channel_id(self) -> int:
         channel = self.managing_channels.filter(is_private=True).first()
         return channel.id if channel else None
 
