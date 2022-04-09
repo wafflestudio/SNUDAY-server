@@ -109,6 +109,21 @@ class UserCreateDeleteTest(TestCase):
 
         self.assertEqual(get.status_code, 200)
 
+    def test_get_user_private_channel(self):
+        private_channel = Channel(
+            name="private channel",
+            description="private channel",
+            is_private=True,
+            managers=self.user,
+        )
+        private_channel.save()
+        self.client.force_authenticate(user=self.user)
+        get = self.client.get("/api/v1/users/me/")
+
+        self.assertEqual(get.status_code, 200)
+        data = get.json()
+        self.assertEqual(data["private_channel_id"], private_channel.id)
+
     def test_update_user(self):
         self.client.force_authenticate(user=self.b)
 
