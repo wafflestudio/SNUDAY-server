@@ -47,7 +47,8 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def get_private_channel_id(self):
-        return self.managing_channels.filter(is_private=True).first()
+        channel = self.managing_channels.filter(is_private=True).first()
+        return channel.id if channel else None
 
     @transaction.atomic
     def create(self, validated_data):
