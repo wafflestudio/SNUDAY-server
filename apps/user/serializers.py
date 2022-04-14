@@ -12,6 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField()
     last_name = serializers.CharField()
     username = serializers.CharField()
+    private_channel_id = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -22,6 +23,7 @@ class UserSerializer(serializers.ModelSerializer):
             "password",
             "first_name",
             "last_name",
+            "private_channel_id",
         )
 
     def validate_email(self, value):
@@ -43,6 +45,10 @@ class UserSerializer(serializers.ModelSerializer):
         if len(value) < 8:
             raise serializers.ValidationError("비밀번호는 8글자 이상이어야 합니다.")
         return value
+
+    def get_private_channel_id(self, user) -> int:
+        channel = user.managing_channels.filter(is_private=True).first()
+        return channel.id if channel else None
 
     @transaction.atomic
     def create(self, validated_data):
