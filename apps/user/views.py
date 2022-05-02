@@ -182,6 +182,13 @@ class UserViewSet(
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 @api_view(["POST"])
 def send_email(request):
