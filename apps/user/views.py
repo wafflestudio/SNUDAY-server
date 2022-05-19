@@ -183,10 +183,19 @@ class UserViewSet(
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
+        """
+        # user 생성 api
+        * username이 admin인 사용자의 채널을 자동으로 구독하도록 설정
+        """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-
+        try:
+            admin = User.objects.get(username="admin")
+            for channel in admin.managing_channels:
+                channel.subscribers.add(user)
+        except User.DoesNotExist: # admin이 없는 경우(테스트 상황에서 그럴 수 있음)
+            pass
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
