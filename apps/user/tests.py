@@ -98,6 +98,27 @@ class UserCreateDeleteTest(TestCase):
 
         self.assertEqual(create.status_code, 400)
 
+    def test_create_user_auto_subscribe(self):  # admin 채널 자동구독 테스트
+        admin = User.objects.create(
+            username="admin",
+            email="asdf@asdf.com",
+            password="password",
+            first_name="ad",
+            last_name="min",
+        )
+        channel = Channel.objects.create(
+            name="holiday", description="holiday", managers=admin
+        )
+
+        self.assertEqual(Channel.objects.count(), 1)
+        self.assertEqual(channel.subscribers.count(), 0)
+        create = self.client.post("/api/v1/users/", self.data, format="json")
+        self.assertEqual(create.status_code, 201)
+
+        self.assertEqual(channel.subscribers.count(), 1)
+
+        self.assertEqual(Channel.objects.count(), 2)
+
     def test_get_user_will_fail_without_login(self):
         get = self.client.get("/api/v1/users/me/")
 
