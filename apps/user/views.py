@@ -192,9 +192,9 @@ class UserViewSet(
         user = serializer.save()
         try:
             admin = User.objects.get(username="admin")
-            for channel in admin.managing_channels:
+            for channel in admin.managing_channels.all():
                 channel.subscribers.add(user)
-        except User.DoesNotExist: # admin이 없는 경우(테스트 상황에서 그럴 수 있음)
+        except User.DoesNotExist:  # admin이 없는 경우(테스트 상황에서 그럴 수 있음)
             pass
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
