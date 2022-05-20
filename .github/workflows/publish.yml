@@ -139,6 +139,9 @@ jobs:
             docker pull ghcr.io/wafflestudio/snuday-server/server-image:main
             docker stop $(docker ps -a -q)
             docker container run -d -p 8000:8000 ghcr.io/wafflestudio/snuday-server/server-image:main python manage.py runserver 0.0.0.0:8000
+            docker rm $(docker ps -a -f status=exited -q)
+            docker image prune
+
 
       - name: Remove Github Actions IP from security group
         run: |
