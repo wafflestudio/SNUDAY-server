@@ -1120,9 +1120,7 @@ class PrivateChannelEventTest(TestCase):
         data = response.json()
         self.assertEqual(len(data), 0)
 
-    def test_watcher_event(self):
-        self.client.force_authenticate(user=self.watcher)
-
+    def test_unlogined_event(self):
         response = self.client.post(
             "/api/v1/channels/{}/events/".format(str(self.channel_id)),
             {
@@ -1135,7 +1133,7 @@ class PrivateChannelEventTest(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
         event_count = Event.objects.count()
         self.assertEqual(event_count, 1)
@@ -1148,7 +1146,7 @@ class PrivateChannelEventTest(TestCase):
             format="json",
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
         data = Event.objects.get(id=self.event_1.id)
 
@@ -1161,7 +1159,7 @@ class PrivateChannelEventTest(TestCase):
             )
         )
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
 
         event_count = Event.objects.count()
         self.assertEqual(event_count, 1)
@@ -1183,10 +1181,7 @@ class PrivateChannelEventTest(TestCase):
 
         response = self.client.get("/api/v1/users/me/events/")
 
-        self.assertEqual(response.status_code, 200)
-
-        data = response.json()
-        self.assertEqual(len(data), 0)
+        self.assertEqual(response.status_code, 401)
 
     def test_subscriber_event(self):
         self.client.force_authenticate(user=self.watcher)

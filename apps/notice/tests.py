@@ -362,7 +362,7 @@ class PublicChannelNoticeTest(TestCase):
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
 
-    def test_watcher_notice(self):
+    def test_unlogined_notice(self):
 
         response = self.client.post(
             "/api/v1/channels/{}/notices/".format(str(self.channel_id)),
