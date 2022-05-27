@@ -720,8 +720,7 @@ class NoticeSearchTest(TestCase):
         self.assertEqual(title_search.status_code, 200)
 
     def test_search_channel_notice_contents(self):
-        self.client.force_authenticate(user=self.watcher)
-
+        # 비로그인 상태에서도 search 되는지 검사
         type = "contents"
         keyword = "귀여운"
         contents_search = self.client.get(
