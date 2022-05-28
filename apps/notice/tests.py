@@ -362,6 +362,62 @@ class PublicChannelNoticeTest(TestCase):
         self.assertIn("created_at", data)
         self.assertIn("updated_at", data)
 
+    def test_unlogined_notice(self):
+
+        response = self.client.post(
+            "/api/v1/channels/{}/notices/".format(str(self.channel_id)),
+            {"title": "title", "contents": "contents"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+        notice_count = Notice.objects.count()
+        self.assertEqual(notice_count, 1)
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/notices/{}/".format(
+                str(self.channel_id), str(self.notice_1.id)
+            ),
+            {"title": "updated title", "contents": "updated contents"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+        data = Notice.objects.get(id=self.notice_1.id)
+
+        self.assertEqual(data.title, "notice title")
+        self.assertEqual(data.contents, "notice content")
+
+        response = self.client.delete(
+            "/api/v1/channels/{}/notices/{}/".format(
+                str(self.channel_id), str(self.notice_1.id)
+            )
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+        notice_count = Notice.objects.count()
+        self.assertEqual(notice_count, 1)
+
+        response = self.client.get(
+            "/api/v1/channels/{}/notices/{}/".format(
+                str(self.channel_id), str(self.notice_1.id)
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(data["id"], self.notice_1.id)
+        self.assertEqual(data["title"], "notice title")
+        self.assertEqual(data["contents"], "notice content")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+
 
 class PrivateChannelNoticeTest(TestCase):
     def setUp(self):
@@ -664,8 +720,7 @@ class NoticeSearchTest(TestCase):
         self.assertEqual(title_search.status_code, 200)
 
     def test_search_channel_notice_contents(self):
-        self.client.force_authenticate(user=self.watcher)
-
+        # 비로그인 상태에서도 search 되는지 검사
         type = "contents"
         keyword = "귀여운"
         contents_search = self.client.get(
@@ -847,10 +902,19 @@ class NoticeGetTest(TestCase):
             managers=self.manager,
         )
 
+        self.public_channel = Channel.objects.create(
+            name="wafflestudio2",
+            description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            is_private=False,
+            managers=self.manager,
+        )
+
         self.channel_id = self.channel.id
         self.client = APIClient()
 
         self.notices = []
+
+        self.public_notices = []
 
         for i in range(1, 12):
             title = "notice" + str(i)
@@ -861,6 +925,16 @@ class NoticeGetTest(TestCase):
                 writer=self.manager,
             )
             self.notices.append(notice)
+
+        for i in range(1, 12):
+            title = "notice" + str(i)
+            notice = Notice.objects.create(
+                title=title,
+                contents="notice content",
+                channel=self.public_channel,
+                writer=self.manager,
+            )
+            self.public_notices.append(notice)
 
     def test_get_pagination(self):
         self.client.force_authenticate(user=self.manager)
@@ -941,7 +1015,7 @@ class NoticeGetTest(TestCase):
         self.assertIn("updated_at", data[0])
 
         response = self.client.get(
-            "/api/v1/channels/{}/recent_notices/".format(str(self.channel_id + 1)),
+            "/api/v1/channels/{}/recent_notices/".format(str(self.channel_id + 2)),
             format="json",
         )
 
@@ -954,3 +1028,116 @@ class NoticeGetTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+    def test_get_public_unlogined(self):
+        response = self.client.get(
+            "/api/v1/channels/{}/notices/".format(str(self.channel_id)),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(
+            "/api/v1/channels/{}/notices/".format(str(self.public_channel.id)),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+
+        self.assertIn("next", data)
+        self.assertIsNone(data["previous"])
+        self.assertEqual(len(data["results"]), 10)
+
+        self.assertEqual(data["results"][0]["title"], "notice11")
+        self.assertEqual(data["results"][1]["title"], "notice10")
+        self.assertEqual(data["results"][9]["title"], "notice2")
+
+        response = self.client.get(
+            "/api/v1/users/me/notices/",
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_get_public_watcher(self):
+        self.client.force_authenticate(user=self.watcher)
+        response = self.client.get(
+            "/api/v1/channels/{}/notices/".format(str(self.channel_id)),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(
+            "/api/v1/channels/{}/notices/".format(str(self.public_channel.id)),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+
+        self.assertIn("next", data)
+        self.assertIsNone(data["previous"])
+        self.assertEqual(len(data["results"]), 10)
+
+        self.assertEqual(data["results"][0]["title"], "notice11")
+        self.assertEqual(data["results"][1]["title"], "notice10")
+        self.assertEqual(data["results"][9]["title"], "notice2")
+
+    def test_get_recent_notices_public_watcher(self):
+        self.client.force_authenticate(user=self.watcher)
+        response = self.client.get(
+            "/api/v1/channels/{}/recent_notices/".format(str(self.channel_id)),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(
+            "/api/v1/channels/{}/recent_notices/".format(str(self.public_channel.id)),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+
+        self.assertEqual(len(data), 3)
+
+        self.assertEqual(data[0]["title"], "notice11")
+        self.assertEqual(data[1]["title"], "notice10")
+        self.assertEqual(data[2]["title"], "notice9")
+
+        self.assertIn("id", data[0])
+        self.assertEqual(data[0]["contents"], "notice content")
+        self.assertEqual(data[0]["channel"], self.public_channel.id)
+        self.assertEqual(data[0]["writer"], self.manager.id)
+        self.assertIn("created_at", data[0])
+        self.assertIn("updated_at", data[0])
+
+    def test_get_recent_notices_public_unlogined(self):
+        response = self.client.get(
+            "/api/v1/channels/{}/recent_notices/".format(str(self.channel_id)),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        response = self.client.get(
+            "/api/v1/channels/{}/recent_notices/".format(str(self.public_channel.id)),
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+
+        self.assertEqual(len(data), 3)
+
+        self.assertEqual(data[0]["title"], "notice11")
+        self.assertEqual(data[1]["title"], "notice10")
+        self.assertEqual(data[2]["title"], "notice9")
+
+        self.assertIn("id", data[0])
+        self.assertEqual(data[0]["contents"], "notice content")
+        self.assertEqual(data[0]["channel"], self.public_channel.id)
+        self.assertEqual(data[0]["writer"], self.manager.id)
+        self.assertIn("created_at", data[0])
+        self.assertIn("updated_at", data[0])

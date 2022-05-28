@@ -825,6 +825,90 @@ class PublicChannelEventTest(TestCase):
         self.assertEqual(data["due_date"], "2021-03-03")
         self.assertFalse(data["has_time"])
 
+    def test_unlogined_event(self):
+
+        response = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            {
+                "title": "title",
+                "memo": "memo",
+                "start_date": "1998-12-11",
+                "due_date": "2021-03-03",
+                "has_time": False,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+        event_count = Event.objects.count()
+        self.assertEqual(event_count, 1)
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {"title": "updated title", "memo": "updated memo"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+        data = Event.objects.get(id=self.event_1.id)
+
+        self.assertEqual(data.title, "event title")
+        self.assertEqual(data.memo, "event memo")
+
+        response = self.client.delete(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            )
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+        event_count = Event.objects.count()
+        self.assertEqual(event_count, 1)
+
+        response = self.client.get(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(data["id"], self.event_1.id)
+        self.assertEqual(data["title"], "event title")
+        self.assertEqual(data["memo"], "event memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
+        self.assertFalse(data["has_time"])
+
+        response = self.client.get(
+            "/api/v1/channels/{}/events/?month=2021-03".format(str(self.channel_id))
+        )
+        self.assertEqual(response.status_code, 200)
+
+        data = response.json()
+        self.assertEqual(len(data["results"]), 1)
+        data = data["results"][0]
+        self.assertEqual(data["id"], self.event_1.id)
+        self.assertEqual(data["title"], "event title")
+        self.assertEqual(data["memo"], "event memo")
+        self.assertEqual(data["channel"], self.channel_id)
+        self.assertEqual(data["writer"], self.manager.id)
+        self.assertIn("created_at", data)
+        self.assertIn("updated_at", data)
+        self.assertEqual(data["start_date"], "1998-12-11")
+        self.assertEqual(data["due_date"], "2021-03-03")
+        self.assertFalse(data["has_time"])
+
 
 class PrivateChannelEventTest(TestCase):
     def setUp(self):
@@ -1035,6 +1119,69 @@ class PrivateChannelEventTest(TestCase):
 
         data = response.json()
         self.assertEqual(len(data), 0)
+
+    def test_unlogined_event(self):
+        response = self.client.post(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id)),
+            {
+                "title": "title",
+                "memo": "memo",
+                "start_date": "1998-12-11",
+                "due_date": "2021-03-03",
+                "has_time": False,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+        event_count = Event.objects.count()
+        self.assertEqual(event_count, 1)
+
+        response = self.client.patch(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            ),
+            {"title": "updated title", "memo": "updated memo"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+        data = Event.objects.get(id=self.event_1.id)
+
+        self.assertEqual(data.title, "event title")
+        self.assertEqual(data.memo, "event memo")
+
+        response = self.client.delete(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            )
+        )
+
+        self.assertEqual(response.status_code, 401)
+
+        event_count = Event.objects.count()
+        self.assertEqual(event_count, 1)
+
+        response = self.client.get(
+            "/api/v1/channels/{}/events/{}/".format(
+                str(self.channel_id), str(self.event_1.id)
+            )
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(
+            "/api/v1/channels/{}/events/".format(str(self.channel_id))
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("error", response.json())
+
+        response = self.client.get("/api/v1/users/me/events/")
+
+        self.assertEqual(response.status_code, 401)
 
     def test_subscriber_event(self):
         self.client.force_authenticate(user=self.watcher)

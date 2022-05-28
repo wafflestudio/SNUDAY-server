@@ -191,7 +191,7 @@ class NoticeIdViewSet(viewsets.GenericViewSet):
 class NoticeRecentViewSet(viewsets.GenericViewSet):
     queryset = Notice.objects.all()
     serializer_class = NoticeChannelNameSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsOwnerOrReadOnly]
 
     @action(detail=True, methods=["GET"])
     def recent_notices(self, request, pk=None):
