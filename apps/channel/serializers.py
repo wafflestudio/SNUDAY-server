@@ -1,6 +1,6 @@
 from django.forms import ValidationError
 from rest_framework import serializers
-from apps.channel.models import Channel, Image
+from apps.channel.models import Channel, Image, UserChannel
 
 # TODO: S3 연결 후 이미지 처리하기
 from apps.user.models import User
@@ -17,6 +17,7 @@ class ChannelSerializer(serializers.ModelSerializer):
     )
     managers = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField(required=False)
+    color = serializers.SerializerMethodField()
 
     class Meta:
         model = Channel
@@ -33,6 +34,7 @@ class ChannelSerializer(serializers.ModelSerializer):
             "subscribers_count",
             "managers",
             "managers_id",
+            "color",
         )
 
     def get_managers(self, channel):
@@ -48,6 +50,21 @@ class ChannelSerializer(serializers.ModelSerializer):
     def get_subscribers_count(self, channel):
         subscribers_count = channel.subscribers.count()
         return subscribers_count
+
+    def get_color(self, channel):
+        if UserChannel.objects.filter(
+            channel=channel, user=self.context["request"].user
+        ).exists():
+            color = (
+                UserChannel.objects.filter(
+                    channel=channel, user=self.context["request"].user
+                )
+                .first()
+                .color
+            )
+        else:
+            color = None
+        return color
 
     def validate(self, data):
 
@@ -118,3 +135,9 @@ class ChannelAwaiterSerializer(serializers.ModelSerializer):
             data["managers"] = User.objects.filter(username__in=username)
 
         return data
+
+
+class UserChannelColorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserChannel
+        fields = ("channel", "user", "color")

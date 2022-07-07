@@ -77,6 +77,7 @@ class Channel(TimeStampModel):
 class UserChannel(models.Model):
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    color = models.CharField(max_length=6)
 
     class Meta:
         constraints = [

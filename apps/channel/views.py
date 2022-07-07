@@ -4,11 +4,12 @@ from django.db import transaction
 from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from apps.channel.exceptions import NoSubscriberInPrivateChannel
 
-from apps.channel.models import Channel, Image
+from apps.channel.models import Channel, Image, UserChannel
 from apps.channel.permission import ManagerCanModify
-from apps.channel.serializers import ChannelSerializer
+from apps.channel.serializers import ChannelSerializer, UserChannelColorSerializer
 from apps.user.models import User
 from apps.user.serializers import UserSerializer
 import re
@@ -346,3 +347,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
+
+
+class ChannelViewSet(viewsets.ModelViewSet):
+    queryset = UserChannel.objects.all()
+    serializer_class = UserChannelColorSerializer
+    permission_classes = [IsAuthenticated]
