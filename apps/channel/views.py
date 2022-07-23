@@ -382,8 +382,6 @@ class ChannelViewSet(viewsets.ModelViewSet):
         color_serializer = UserChannelColorSerializer(
             UserChannel.objects.get(channel=channel, user=request.user),
             data={
-                "channel": channel,
-                "user": request.user,
                 "color": THEME_COLOR[request.data["color"]],
             },
             partial=True,
@@ -391,3 +389,18 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         color_serializer.is_valid(raise_exception=True)
         color_serializer.save()
+
+    @color.mapping.get
+    def get_color(self, request, pk):
+        """
+        # 채널 색상 GET API
+        * {id}에는 channel의 id를 넣으면 됨
+        * 구독자가 아닌 경우 테마 색상 중 랜덤으로 하나를 반환
+        """
+        channel = self.get_object()
+        if not channel.subscribers.filter(id=request.user.id).exists():
+            return Response({"color": random_color()})
+        serializer = UserChannelColorSerializer(
+            UserChannel.objects.get(channel=channel, user=request.user)
+        )
+        return Response(serializer.data)

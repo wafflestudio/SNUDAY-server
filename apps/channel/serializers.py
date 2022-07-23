@@ -139,9 +139,19 @@ class ChannelAwaiterSerializer(serializers.ModelSerializer):
 
 
 class UserChannelColorSerializer(serializers.ModelSerializer):
+
+    channel = serializers.SerializerMethodField()
+    user = serializers.SerializerMethodField()
+
     class Meta:
         model = UserChannel
         fields = ("channel", "user", "color")
+
+    def get_channel(self, obj):
+        return ChannelSerializer(obj.channel, context=self.context).data
+
+    def get_user(self, obj):
+        return UserSerializer(obj.user, context=self.context).data
 
     def validate(self, data):
         if "color" not in data:
