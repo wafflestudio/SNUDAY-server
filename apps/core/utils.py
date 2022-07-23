@@ -1,9 +1,26 @@
 from functools import reduce
+import random
 
 from django.shortcuts import _get_queryset
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+
+THEME_COLOR = {
+    "POMEGRANATE": "#d4515d",
+    "ORANGE": "#e8914f",
+    "YELLOW": "#f3c550",
+    "LIGHTGREEN": "#b2d652",
+    "GREEN": "#60bf70",
+    "MEDITTERANEAN": "#60cdc8",
+    "SKYBLUE": "#4499e3",
+    "AMETHYST": "#a45eae",
+    "LAVENDER": "#4b4dbd",
+}
+
+# get random color value(6 length string) from theme colors
+def random_color():
+    random.choice(list(THEME_COLOR.values()))
 
 
 @api_view(["get"])

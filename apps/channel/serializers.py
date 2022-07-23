@@ -1,6 +1,7 @@
 from django.forms import ValidationError
 from rest_framework import serializers
 from apps.channel.models import Channel, Image, UserChannel
+from apps.core.utils import THEME_COLOR, random_color
 
 # TODO: S3 연결 후 이미지 처리하기
 from apps.user.models import User
@@ -141,3 +142,10 @@ class UserChannelColorSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserChannel
         fields = ("channel", "user", "color")
+
+    def validate(self, data):
+        if "color" not in data:
+            data["color"] = random_color()
+        if data.get("color") not in THEME_COLOR.values():
+            raise serializers.ValidationError("테마에 없는 색입니다.")
+        return data
