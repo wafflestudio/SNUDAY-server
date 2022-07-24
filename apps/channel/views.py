@@ -382,7 +382,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         color_serializer = UserChannelColorSerializer(
             UserChannel.objects.get(channel=channel, user=request.user),
             data={
-                "color": THEME_COLOR[request.data["color"]],
+                "color": THEME_COLOR.get(request.data["color"], None),
             },
             partial=True,
         )
