@@ -18,7 +18,6 @@ class ChannelSerializer(serializers.ModelSerializer):
     )
     managers = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField(required=False)
-    color = serializers.SerializerMethodField()
 
     class Meta:
         model = Channel
@@ -35,7 +34,6 @@ class ChannelSerializer(serializers.ModelSerializer):
             "subscribers_count",
             "managers",
             "managers_id",
-            "color",
         )
 
     def get_managers(self, channel):
@@ -51,21 +49,6 @@ class ChannelSerializer(serializers.ModelSerializer):
     def get_subscribers_count(self, channel):
         subscribers_count = channel.subscribers.count()
         return subscribers_count
-
-    def get_color(self, channel):
-        if UserChannel.objects.filter(
-            channel=channel, user=self.context["request"].user
-        ).exists():
-            color = (
-                UserChannel.objects.filter(
-                    channel=channel, user=self.context["request"].user
-                )
-                .first()
-                .color
-            )
-        else:
-            color = None
-        return color
 
     def validate(self, data):
 
@@ -154,7 +137,7 @@ class UserChannelColorSerializer(serializers.ModelSerializer):
         return UserSerializer(obj.user, context=self.context).data
 
     def validate(self, data):
-        if "color" not in data:
+        if "color" not in data or data["color"] is None:
             data["color"] = random_color()
         if data.get("color") not in THEME_COLOR.values():
             raise serializers.ValidationError("테마에 없는 색입니다.")

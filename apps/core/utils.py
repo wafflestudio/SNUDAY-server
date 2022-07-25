@@ -20,7 +20,7 @@ THEME_COLOR = {
 
 # get random color value(6 length string) from theme colors
 def random_color():
-    random.choice(list(THEME_COLOR.values()))
+    return random.choice(list(THEME_COLOR.values()))
 
 
 @api_view(["get"])

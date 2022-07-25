@@ -74,8 +74,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
                 color_serializer = UserChannelColorSerializer(
                     UserChannel.objects.get(channel=channel, user=user),
-                    data={"channel": channel, "user": user, "color": random_color()},
+                    data={"color": random_color()},
+                    context={"request": request},
+                    partial=True,
                 )
+
                 color_serializer.is_valid(raise_exception=True)
                 color_serializer.save()
 
@@ -213,12 +216,17 @@ class ChannelViewSet(viewsets.ModelViewSet):
         else:
             channel.subscribers.add(request.user)
 
-        color_serializer = UserChannelColorSerializer(
-            UserChannel.objects.get(channel=channel, user=request.user),
-            data={"channel": channel, "user": request.user, "color": random_color()},
-        )
-        color_serializer.is_valid(raise_exception=True)
-        color_serializer.save()
+            color_serializer = UserChannelColorSerializer(
+                UserChannel.objects.get(channel=channel, user=request.user),
+                data={
+                    "channel": channel,
+                    "user": request.user,
+                    "color": random_color(),
+                },
+                context={"request": request},
+            )
+            color_serializer.is_valid(raise_exception=True)
+            color_serializer.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -288,6 +296,14 @@ class ChannelViewSet(viewsets.ModelViewSet):
         else:
             channel.subscribers.add(user)
             channel.awaiters.remove(user)
+
+            color_serializer = UserChannelColorSerializer(
+                UserChannel.objects.get(channel=channel, user=user),
+                data={"channel": channel, "user": user, "color": random_color()},
+                context={"request": request},
+            )
+            color_serializer.is_valid(raise_exception=True)
+            color_serializer.save()
 
         return Response(status=status.HTTP_200_OK)
 
@@ -381,14 +397,14 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         color_serializer = UserChannelColorSerializer(
             UserChannel.objects.get(channel=channel, user=request.user),
-            data={
-                "color": THEME_COLOR.get(request.data["color"], None),
-            },
+            data=request.data,
             partial=True,
+            context={"request": request},
         )
 
         color_serializer.is_valid(raise_exception=True)
         color_serializer.save()
+        return Response(color_serializer.data)
 
     @color.mapping.get
     def get_color(self, request, pk):
@@ -401,6 +417,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         if not channel.subscribers.filter(id=request.user.id).exists():
             return Response({"color": random_color()})
         serializer = UserChannelColorSerializer(
-            UserChannel.objects.get(channel=channel, user=request.user)
+            UserChannel.objects.get(channel=channel, user=request.user),
+            context={"request": request},
         )
         return Response(serializer.data)

@@ -1,8 +1,8 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.channel.models import Channel
-from apps.core.utils import THEME_COLOR
+from apps.channel.models import Channel, UserChannel
+from apps.core.utils import THEME_COLOR, random_color
 from apps.user.models import User
 
 
@@ -28,6 +28,7 @@ class ChannelTest(TestCase):
     def test_create_channel(self):
         create = self.client.post("/api/v1/channels/", self.data, format="json")
         data = create.json()
+
         channel = Channel.objects.get(managers=self.user)
         self.assertEqual(channel.managers.username, self.user.username)
         self.assertEqual(create.status_code, 201)
@@ -455,16 +456,9 @@ class ChannelColorTest(TestCase):
             managers=self.user,
         )
 
+        self.channel1.subscribers.add(self.user)
+
         self.client = APIClient()
-
-    def test_get_default_channel_color(self):
-        self.client.force_authenticate(user=self.user)
-        color_data = self.client.get(f"/api/v1/channels/{self.channel1.id}/color/")
-
-        data = color_data.json()
-        self.assertIn("color", data)
-        self.assertIn(data["color"], THEME_COLOR.values())
-        self.assertEqual(color_data.status_code, 200)
 
     def test_get_default_channel_color_after_subscribe(self):
         self.client.force_authenticate(user=self.user2)
@@ -482,14 +476,14 @@ class ChannelColorTest(TestCase):
         self.client.force_authenticate(user=self.user)
         color_update = self.client.patch(
             f"/api/v1/channels/{self.channel1.id}/color/",
-            {"color": "SKYBLUE"},
+            {"color": THEME_COLOR["SKYBLUE"]},
             format="json",
         )
 
         self.assertEqual(color_update.status_code, 200)
 
         data = color_update.json()
-        self.assertEqual(data["color"], THEME_COLOR["color"])
+        self.assertEqual(data["color"], THEME_COLOR["SKYBLUE"])
 
     def test_get_color_non_subscriber(self):
         self.client.force_authenticate(user=self.user2)
@@ -502,7 +496,7 @@ class ChannelColorTest(TestCase):
         self.client.force_authenticate(user=self.user2)
         color_update = self.client.patch(
             f"/api/v1/channels/{self.channel1.id}/color/",
-            {"color": "SKYBLUE"},
+            {"color": THEME_COLOR["SKYBLUE"]},
             format="json",
         )
 
@@ -512,7 +506,7 @@ class ChannelColorTest(TestCase):
         self.client.force_authenticate(user=self.user)
         color_update = self.client.patch(
             f"/api/v1/channels/{self.channel1.id}/color/",
-            {"color": "SKYBLVE"},
+            {"color": "#111111"},
             format="json",
         )
 
