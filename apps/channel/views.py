@@ -4,11 +4,13 @@ from django.db import transaction
 from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
 from apps.channel.exceptions import NoSubscriberInPrivateChannel
 
-from apps.channel.models import Channel, Image
+from apps.channel.models import Channel, Image, UserChannel
 from apps.channel.permission import ManagerCanModify
-from apps.channel.serializers import ChannelSerializer
+from apps.channel.serializers import ChannelSerializer, UserChannelColorSerializer
+from apps.core.utils import THEME_COLOR, random_color
 from apps.user.models import User
 from apps.user.serializers import UserSerializer
 import re
@@ -69,6 +71,16 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 channel.managers = manager_obj
                 channel.subscribers.add(manager_obj)
                 channel.save()
+
+                color_serializer = UserChannelColorSerializer(
+                    UserChannel.objects.get(channel=channel, user=user),
+                    data={"color": random_color()},
+                    context={"request": request},
+                    partial=True,
+                )
+
+                color_serializer.is_valid(raise_exception=True)
+                color_serializer.save()
 
                 if (
                     serializer.data["is_private"]
@@ -204,6 +216,18 @@ class ChannelViewSet(viewsets.ModelViewSet):
         else:
             channel.subscribers.add(request.user)
 
+            color_serializer = UserChannelColorSerializer(
+                UserChannel.objects.get(channel=channel, user=request.user),
+                data={
+                    "channel": channel,
+                    "user": request.user,
+                    "color": random_color(),
+                },
+                context={"request": request},
+            )
+            color_serializer.is_valid(raise_exception=True)
+            color_serializer.save()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @subscribe.mapping.delete
@@ -272,6 +296,14 @@ class ChannelViewSet(viewsets.ModelViewSet):
         else:
             channel.subscribers.add(user)
             channel.awaiters.remove(user)
+
+            color_serializer = UserChannelColorSerializer(
+                UserChannel.objects.get(channel=channel, user=user),
+                data={"channel": channel, "user": user, "color": random_color()},
+                context={"request": request},
+            )
+            color_serializer.is_valid(raise_exception=True)
+            color_serializer.save()
 
         return Response(status=status.HTTP_200_OK)
 
@@ -346,3 +378,46 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         data = self.get_serializer(page, many=True).data
         return self.get_paginated_response(data)
+
+    @action(detail=True, methods=["patch"])
+    def color(self, request, pk):
+        """
+        # 색상 변경
+        * {id}에는 색을 변경하려는 channel의 id를 넣으면 됨
+        * 테마 색상에 없는 색을 입력 시 400
+        * 그 채널을 구독한 상태가 아니면 400
+        * 색상은 POMEGRANATE, ORANGE, YELLOW, LIGHTGREEN, GREEN, MEDITTERANEAN, SKYBLUE, AMETHYST, LAVENDER 중 하나로 입력
+        * 각 채널에 지정한 색은 그 유저에게만 귀속됨, 타 유저에게는 영향을 미치지 않음
+        """
+        channel = self.get_object()
+        if not channel.subscribers.filter(id=request.user.id).exists():
+            return Response(
+                {"error": "구독 중이 아닙니다."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        color_serializer = UserChannelColorSerializer(
+            UserChannel.objects.get(channel=channel, user=request.user),
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+
+        color_serializer.is_valid(raise_exception=True)
+        color_serializer.save()
+        return Response(color_serializer.data)
+
+    @color.mapping.get
+    def get_color(self, request, pk):
+        """
+        # 채널 색상 GET API
+        * {id}에는 channel의 id를 넣으면 됨
+        * 구독자가 아닌 경우 테마 색상 중 랜덤으로 하나를 반환
+        """
+        channel = self.get_object()
+        if not channel.subscribers.filter(id=request.user.id).exists():
+            return Response({"color": random_color()})
+        serializer = UserChannelColorSerializer(
+            UserChannel.objects.get(channel=channel, user=request.user),
+            context={"request": request},
+        )
+        return Response(serializer.data)

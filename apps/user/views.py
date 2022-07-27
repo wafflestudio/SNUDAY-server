@@ -28,7 +28,7 @@ class UserViewSet(
     def get_permissions(self):
         if self.action in (
             "create",
-            "login",
+            "login1",
             "verify_email",
             "refresh",
             "find_password",

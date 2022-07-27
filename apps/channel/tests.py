@@ -1,7 +1,8 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.channel.models import Channel
+from apps.channel.models import Channel, UserChannel
+from apps.core.utils import THEME_COLOR, random_color
 from apps.user.models import User
 
 
@@ -27,6 +28,7 @@ class ChannelTest(TestCase):
     def test_create_channel(self):
         create = self.client.post("/api/v1/channels/", self.data, format="json")
         data = create.json()
+
         channel = Channel.objects.get(managers=self.user)
         self.assertEqual(channel.managers.username, self.user.username)
         self.assertEqual(create.status_code, 201)
@@ -102,6 +104,7 @@ class ChannelPermissionTest(TestCase):
             is_private=True,
             managers=self.user,
         )
+
         self.client = APIClient()
 
     def test_channel_list(self):
@@ -427,3 +430,84 @@ class ChannelSearchTest(TestCase):
         data = not_search.json()["results"]
         self.assertEqual(len(data), 0)
         self.assertEqual(not_search.status_code, 200)
+
+
+class ChannelColorTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            email="email@email.com",
+            password="password",
+            first_name="first",
+            last_name="last",
+        )
+
+        self.user2 = User.objects.create_user(
+            username="testuser2",
+            email="email2@email.com",
+            password="password",
+            first_name="first2",
+            last_name="last2",
+        )
+
+        self.channel1 = Channel.objects.create(
+            name="channel1",
+            description="맛있는 서비스가 탄생하는 곳, 서울대학교 컴퓨터공학부 웹/앱 개발 동아리 와플스튜디오입니다!",
+            managers=self.user,
+        )
+
+        self.channel1.subscribers.add(self.user)
+
+        self.client = APIClient()
+
+    def test_get_default_channel_color_after_subscribe(self):
+        self.client.force_authenticate(user=self.user2)
+        subscribe = self.client.post(f"/api/v1/channels/{self.channel1.id}/subscribe/")
+
+        self.client.force_authenticate(user=self.user2)
+        color_data = self.client.get(f"/api/v1/channels/{self.channel1.id}/color/")
+
+        data = color_data.json()
+        self.assertIn("color", data)
+        self.assertIn(data["color"], THEME_COLOR.values())
+        self.assertEqual(color_data.status_code, 200)
+
+    def test_patch_channel_color(self):
+        self.client.force_authenticate(user=self.user)
+        color_update = self.client.patch(
+            f"/api/v1/channels/{self.channel1.id}/color/",
+            {"color": THEME_COLOR["SKYBLUE"]},
+            format="json",
+        )
+
+        self.assertEqual(color_update.status_code, 200)
+
+        data = color_update.json()
+        self.assertEqual(data["color"], THEME_COLOR["SKYBLUE"])
+
+    def test_get_color_non_subscriber(self):
+        self.client.force_authenticate(user=self.user2)
+        color_data = self.client.get(f"/api/v1/channels/{self.channel1.id}/color/")
+        data = color_data.json()
+        self.assertIn("color", data)
+        self.assertNotIn("channel", data)
+        self.assertIn(data["color"], THEME_COLOR.values())
+
+        self.client.force_authenticate(user=self.user2)
+        color_update = self.client.patch(
+            f"/api/v1/channels/{self.channel1.id}/color/",
+            {"color": THEME_COLOR["SKYBLUE"]},
+            format="json",
+        )
+
+        self.assertEqual(color_update.status_code, 400)
+
+    def test_patch_wrong_channel_color_will_fail(self):
+        self.client.force_authenticate(user=self.user)
+        color_update = self.client.patch(
+            f"/api/v1/channels/{self.channel1.id}/color/",
+            {"color": "#111111"},
+            format="json",
+        )
+
+        self.assertEqual(color_update.status_code, 400)

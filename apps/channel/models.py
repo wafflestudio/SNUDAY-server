@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import UniqueConstraint, Count, F, Prefetch, OuterRef, Subquery
 
 from apps.core.models import TimeStampModel
+from apps.core.utils import THEME_COLOR
 from apps.user.models import User
 
 
@@ -77,6 +78,7 @@ class Channel(TimeStampModel):
 class UserChannel(models.Model):
     channel = models.ForeignKey(Channel, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    color = models.CharField(max_length=10, null=True)
 
     class Meta:
         constraints = [
