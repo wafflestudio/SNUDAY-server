@@ -465,7 +465,7 @@ class ChannelColorTest(TestCase):
         subscribe = self.client.post(f"/api/v1/channels/{self.channel1.id}/subscribe/")
 
         self.client.force_authenticate(user=self.user2)
-        color_data = self.client.get(f"/api/v1/channels/{self.channel1.id}/color/")
+        color_data = self.client.get(f"/api/v1/channels/{self.channel1.id}/")
 
         data = color_data.json()
         self.assertIn("color", data)
@@ -501,6 +501,10 @@ class ChannelColorTest(TestCase):
         )
 
         self.assertEqual(color_update.status_code, 400)
+
+        color_data = self.client.get(f"/api/v1/channels/{self.channel1.id}/")
+        data = color_data.json()
+        self.assertEqual(data["color"], None)
 
     def test_patch_wrong_channel_color_will_fail(self):
         self.client.force_authenticate(user=self.user)

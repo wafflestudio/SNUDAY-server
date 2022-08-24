@@ -18,6 +18,7 @@ class ChannelSerializer(serializers.ModelSerializer):
     )
     managers = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField(required=False)
+    color = serializers.SerializerMethodField()
 
     class Meta:
         model = Channel
@@ -25,6 +26,7 @@ class ChannelSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "image",
+            "color",
             "description",
             "is_private",
             "is_official",
@@ -45,6 +47,18 @@ class ChannelSerializer(serializers.ModelSerializer):
         else:
             path = None
         return path
+
+    def get_color(self, channel):
+        if "request" not in self.context:
+            return None
+        request = self.context["request"]
+        if request is None or not request.user.is_authenticated:
+            return None
+        try:
+            color = UserChannel.objects.get(channel=channel, user=request.user).color
+        except UserChannel.DoesNotExist:
+            return None
+        return color
 
     def get_subscribers_count(self, channel):
         subscribers_count = channel.subscribers.count()
@@ -72,6 +86,7 @@ class ChannelAwaiterSerializer(serializers.ModelSerializer):
     managers = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField(required=False)
     awaiters_count = serializers.SerializerMethodField(read_only=True)
+    color = serializers.SerializerMethodField()
 
     class Meta:
         model = Channel
@@ -79,6 +94,7 @@ class ChannelAwaiterSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "image",
+            "color",
             "description",
             "is_private",
             "is_official",
@@ -104,6 +120,21 @@ class ChannelAwaiterSerializer(serializers.ModelSerializer):
         else:
             path = None
         return path
+
+    def get_color(self, channel):
+        if "request" not in self.context:
+            return None
+        request = self.context["request"]
+        if request is None:
+            return None
+        try:
+            color_data = UserChannelColorSerializer(
+                UserChannel.objects.get(channel=channel, user=request.user),
+                context={"request": request},
+            )
+        except UserChannel.DoesNotExist:
+            return None
+        return color_data.data["color"]
 
     def get_subscribers_count(self, channel):
         subscribers_count = channel.subscribers.count()
