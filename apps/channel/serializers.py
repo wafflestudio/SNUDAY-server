@@ -123,17 +123,17 @@ class ChannelAwaiterSerializer(serializers.ModelSerializer):
 
     def get_color(self, channel):
         if "request" not in self.context:
-            return None
+            return random_color()
         request = self.context["request"]
         if request is None:
-            return None
+            return random_color()
         try:
             color_data = UserChannelColorSerializer(
                 UserChannel.objects.get(channel=channel, user=request.user),
                 context={"request": request},
             )
         except UserChannel.DoesNotExist:
-            return None
+            return random_color()
         return color_data.data["color"]
 
     def get_subscribers_count(self, channel):
