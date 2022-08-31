@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from multiprocessing import context
 from django.db.models import Q
 from django.db import transaction
 from rest_framework import viewsets, status, serializers
@@ -48,7 +49,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         try:
             with transaction.atomic():
-                serializer = self.get_serializer(data=data)
+                serializer = self.get_serializer(
+                    data=data, context={"request": request}
+                )
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
 
@@ -59,7 +62,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
                     image.channel = channel
                     image.save()
 
-                serializer = self.get_serializer(channel, data=data)
+                serializer = self.get_serializer(
+                    channel, data=data, context={"request": request}
+                )
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
 
@@ -106,7 +111,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         qs = Channel.objects.filter(is_personal=False)
         page = self.paginate_queryset(qs)
 
-        data = self.get_serializer(page, many=True).data
+        data = self.get_serializer(page, many=True, context={"request": request}).data
         return self.get_paginated_response(data)
 
     def partial_update(self, request, pk=None):
@@ -130,7 +135,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
         if "image" in data:
             image = Image.objects.create(image=data["image"], channel=channel)
 
-        serializer = self.get_serializer(channel, data=data, partial=True)
+        serializer = self.get_serializer(
+            channel, data=data, context={"request": request}, partial=True
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -192,7 +199,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
                 {"error": "private channel은 열람할 수 없습니다."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        serializer = self.get_serializer(channel)
+        serializer = self.get_serializer(channel, context={"request": request})
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
@@ -343,7 +350,9 @@ class ChannelViewSet(viewsets.ModelViewSet):
         channels = Channel.objects.filter(is_private=False, is_personal=False).order_by(
             "-subscribers_count"
         )[:5]
-        serializer = self.get_serializer(channels, many=True)
+        serializer = self.get_serializer(
+            channels, context={"request": request}, many=True
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"])
@@ -376,7 +385,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
 
         page = self.paginate_queryset(qs)
 
-        data = self.get_serializer(page, many=True).data
+        data = self.get_serializer(page, context={"request": request}, many=True).data
         return self.get_paginated_response(data)
 
     @action(detail=True, methods=["patch"])
@@ -386,7 +395,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
         * {id}에는 색을 변경하려는 channel의 id를 넣으면 됨
         * 테마 색상에 없는 색을 입력 시 400
         * 그 채널을 구독한 상태가 아니면 400
-        * 색상은 POMEGRANATE, ORANGE, YELLOW, LIGHTGREEN, GREEN, MEDITTERANEAN, SKYBLUE, AMETHYST, LAVENDER 중 하나로 입력
+        * 색상은 # 뒤에 6자리 hex code를 입력한 7자리 string으로 입력
         * 각 채널에 지정한 색은 그 유저에게만 귀속됨, 타 유저에게는 영향을 미치지 않음
         """
         channel = self.get_object()
