@@ -93,9 +93,6 @@ jobs:
       - name: create dotenv
         run: echo "${{ secrets.DOTENV }}" > .env
 
-      - name: create private key
-        run: echo "${{ secrets.DJANGO_KEY }}" | tr -d '\r' > django.key
-
       - name: Log into GitHub Container Registry
         run: echo "${{ secrets.TOKEN }}" | docker login https://docker.pkg.github.com -u ${{ secrets.USER }} --password-stdin
 

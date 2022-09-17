@@ -21,7 +21,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "drf_yasg",
     "storages",
-    "sslserver",
     "debug_toolbar",
     "apps.user",
     "apps.channel",
