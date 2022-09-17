@@ -9,6 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
+    "ec2-52-79-115-201.ap-northeast-2.compute.amazonaws.com",
 ]
 
 INSTALLED_APPS = [
