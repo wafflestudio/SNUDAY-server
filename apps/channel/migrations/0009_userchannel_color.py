@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('channel', '0008_delete_managerchannel'),
+        ("channel", "0008_delete_managerchannel"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='userchannel',
-            name='color',
+            model_name="userchannel",
+            name="color",
             field=models.CharField(max_length=10, null=True),
         ),
     ]

@@ -13,7 +13,7 @@ services:
     env_file:
       - ./.env
     working_dir: /root
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runsslserver --certificate django.crt --key django.key 0.0.0.0:8000
     depends_on:
       mysql:
         condition: service_healthy
